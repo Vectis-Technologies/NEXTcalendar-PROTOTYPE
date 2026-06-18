@@ -3,1351 +3,2065 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEXTcalendar | AI calendar command center</title>
-  <link rel="icon" href="favicon.png" type="image/png" />
+  <title>NEXTcalendar | Easy schedule planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Configure Tailwind Play CDN to use class-based dark mode
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
   <style>
     :root {
-      --bg: #f7f4ee;
-      --paper: #fffdfa;
+      --bg: #fcfbfa;
+      --paper: #ffffff;
       --ink: #101114;
-      --muted: #68645d;
-      --line: rgba(16, 17, 20, 0.12);
-      --soft: rgba(255, 253, 250, 0.78);
-      --black: #101114;
-      --green: #1f7a4d;
-      --mint: #dff5e8;
-      --amber: #c97712;
-      --rose: #b4425b;
-      --sky: #3275a8;
-      --shadow: 0 28px 90px rgba(16, 17, 20, 0.16);
-      --radius: 8px;
+      --muted: #5c5a55;
+      --line: rgba(16, 17, 20, 0.08);
+      --soft: rgba(255, 255, 255, 0.8);
+      --emerald: #0f766e;
+      --emerald-light: #f0fdf4;
     }
 
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    .dark {
+      --bg: #0b0c10;
+      --paper: #12131a;
+      --ink: #f4f3f0;
+      --muted: #a3a19c;
+      --line: rgba(244, 243, 240, 0.08);
+      --soft: rgba(18, 19, 26, 0.8);
+      --emerald: #14b8a6;
+      --emerald-light: #022c22;
+    }
+
     body {
-      margin: 0;
       color: var(--ink);
       background: var(--bg);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      letter-spacing: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      transition: background-color 0.2s, color 0.2s;
     }
 
-    body.dark {
-      --bg: #0f1115;
-      --paper: #17191f;
-      --ink: #f7f4ee;
-      --muted: #b4aea4;
-      --line: rgba(247, 244, 238, 0.14);
-      --soft: rgba(23, 25, 31, 0.76);
-      --black: #f7f4ee;
-      --shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+    /* Hide standard cursor completely on fine pointer devices */
+    @media (pointer: fine) {
+      body, a, button, select, textarea, canvas, input {
+        cursor: none !important;
+      }
     }
 
-    a { color: inherit; text-decoration: none; }
-    button, input, select, textarea { font: inherit; }
-    img { max-width: 100%; display: block; }
-
-    .shell {
-      width: min(1180px, calc(100% - 32px));
-      margin: 0 auto;
-    }
-
-    .nav {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      border-bottom: 1px solid var(--line);
-      background: rgba(247, 244, 238, 0.78);
-      backdrop-filter: blur(20px);
-    }
-
-    body.dark .nav { background: rgba(15, 17, 21, 0.78); }
-
-    .nav-inner {
-      min-height: 68px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 800;
-      letter-spacing: 0;
-    }
-
-    .brand-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      object-fit: contain;
-      display: block;
-    }
-
-    .mark {
-      width: 34px;
-      height: 34px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--paper);
-      display: grid;
-      place-items: center;
-      box-shadow: 0 8px 20px rgba(16, 17, 20, 0.08);
-    }
-
-    .mark::before {
-      content: "";
-      width: 18px;
-      height: 18px;
-      border-radius: 5px;
-      background:
-        linear-gradient(90deg, transparent 45%, rgba(255,255,255,0.75) 45% 55%, transparent 55%),
-        linear-gradient(0deg, transparent 45%, rgba(255,255,255,0.75) 45% 55%, transparent 55%),
-        linear-gradient(135deg, #141414, #286c4a);
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 22px;
-      color: var(--muted);
-      font-size: 0.94rem;
-    }
-
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .icon-btn,
-    .pill,
-    .primary-btn,
-    .ghost-btn {
-      min-height: 40px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-    }
-
-    .icon-btn {
-      width: 42px;
-      color: var(--ink);
-      background: var(--paper);
-    }
-
-    .pill, .ghost-btn {
-      padding: 0 16px;
-      color: var(--ink);
-      background: var(--soft);
-    }
-
-    .primary-btn {
-      padding: 0 18px;
-      border-color: var(--black);
-      color: var(--bg);
-      background: var(--black);
-      font-weight: 750;
-    }
-
-    .primary-btn:hover, .ghost-btn:hover, .icon-btn:hover, .pill:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 30px rgba(16, 17, 20, 0.12);
-    }
-
-    .hero {
-      min-height: calc(100svh - 68px);
-      display: grid;
-      align-items: center;
-      padding: 58px 0 28px;
-      overflow: hidden;
-    }
-
-    .hero-copy {
-      text-align: center;
-      max-width: 930px;
-      margin: 0 auto 30px;
-    }
-
-    .rank {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .sparkline {
-      width: 74px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--ink), transparent);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(3.35rem, 9.5vw, 8.8rem);
-      line-height: 0.9;
-      letter-spacing: 0;
-      font-weight: 900;
-      text-wrap: balance;
-    }
-
-    .hero-copy p {
-      max-width: 760px;
-      margin: 22px auto 0;
-      color: var(--muted);
-      font-size: clamp(1.08rem, 2vw, 1.42rem);
-      line-height: 1.55;
-      text-wrap: balance;
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 26px;
-    }
-
-    .store-btn {
-      min-height: 54px;
-      padding: 0 22px;
-      border-radius: 999px;
-      border: 1px solid var(--black);
-      color: var(--bg);
-      background: var(--black);
-      font-weight: 760;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .hero-stage {
-      position: relative;
-      width: min(1060px, 100%);
-      margin: 0 auto;
-      min-height: 440px;
-      display: grid;
-      place-items: center;
-    }
-
-    .screen {
-      position: relative;
-      width: min(980px, 100%);
-      border: 1px solid rgba(16, 17, 20, 0.18);
-      border-radius: var(--radius);
-      background: var(--paper);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      transform: perspective(1200px) rotateX(6deg);
-    }
-
-    .screen-bar {
-      height: 38px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--line);
-      padding: 0 14px;
-      color: var(--muted);
-      font-size: 0.82rem;
-      background: rgba(255,255,255,0.58);
-    }
-
-    body.dark .screen-bar { background: rgba(255,255,255,0.04); }
-
-    .dots { display: flex; gap: 6px; }
-    .dots span { width: 9px; height: 9px; border-radius: 50%; background: #c8c3ba; }
-    .dots span:nth-child(1) { background: #df6b76; }
-    .dots span:nth-child(2) { background: #dba348; }
-    .dots span:nth-child(3) { background: #54a56d; }
-
-    .product-shot {
-      aspect-ratio: 1366 / 768;
-      width: 100%;
-      object-fit: cover;
-      object-position: top center;
-      filter: saturate(0.94) contrast(1.02);
-    }
-
-    .assistant-card {
-      position: absolute;
-      right: clamp(10px, 4vw, 58px);
-      bottom: 12px;
-      width: min(390px, calc(100% - 24px));
-      border: 1px solid rgba(16, 17, 20, 0.16);
-      border-radius: var(--radius);
-      background: rgba(255, 253, 250, 0.9);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 22px 70px rgba(16, 17, 20, 0.2);
-      padding: 14px;
-    }
-
-    body.dark .assistant-card { background: rgba(23, 25, 31, 0.9); }
-
-    .assistant-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      color: var(--muted);
-      font-size: 0.82rem;
-      margin-bottom: 12px;
-    }
-
-    .assistant-card h3 {
-      margin: 0 0 8px;
-      font-size: 1rem;
-      letter-spacing: 0;
-    }
-
-    .assistant-card p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.5;
-      font-size: 0.94rem;
-    }
-
-    .floating-chip {
-      position: absolute;
-      left: clamp(8px, 3vw, 46px);
-      top: 28px;
-      border: 1px solid rgba(16, 17, 20, 0.16);
-      border-radius: 999px;
-      padding: 10px 14px;
-      background: rgba(255, 253, 250, 0.9);
-      box-shadow: 0 18px 50px rgba(16, 17, 20, 0.14);
-      color: var(--ink);
-      font-size: 0.9rem;
-      backdrop-filter: blur(18px);
-    }
-
-    body.dark .floating-chip { background: rgba(23, 25, 31, 0.9); }
-
-    section {
-      padding: 88px 0;
-      border-top: 1px solid var(--line);
-    }
-
-    .section-head {
-      display: grid;
-      grid-template-columns: minmax(0, 0.9fr) minmax(280px, 0.52fr);
-      gap: 40px;
-      align-items: end;
-      margin-bottom: 34px;
-    }
-
-    h2 {
-      margin: 0;
-      font-size: clamp(2.2rem, 5vw, 5.2rem);
-      line-height: 0.94;
-      letter-spacing: 0;
-      text-wrap: balance;
-    }
-
-    .section-head p,
-    .lead {
-      color: var(--muted);
-      line-height: 1.65;
-      font-size: 1.05rem;
-      margin: 0;
-    }
-
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .card {
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--paper);
-      padding: 20px;
-      box-shadow: 0 14px 40px rgba(16, 17, 20, 0.06);
-    }
-
-    .card.tall {
-      min-height: 310px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .kicker {
-      color: var(--muted);
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 760;
-    }
-
-    .card h3 {
-      margin: 10px 0 10px;
-      font-size: 1.25rem;
-      letter-spacing: 0;
-    }
-
-    .card p {
-      color: var(--muted);
-      line-height: 1.58;
-      margin: 0;
-    }
-
-    .mini-ui {
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: rgba(16, 17, 20, 0.035);
-      padding: 12px;
-      margin-top: 18px;
-    }
-
-    body.dark .mini-ui { background: rgba(255,255,255,0.04); }
-
-    .density-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .density-row button,
-    .tag,
-    .faq-question,
-    .menu-item {
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--paper);
-      color: var(--ink);
-      min-height: 38px;
-      padding: 0 12px;
-      cursor: pointer;
+    .border-custom {
+      border-color: var(--line);
     }
 
-    .density-row button.active {
-      background: var(--black);
-      color: var(--bg);
-      border-color: var(--black);
+    /* Clean modern scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-
-    .calendar-demo {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 18px;
-      align-items: stretch;
-    }
-
-    .calendar-board {
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--paper);
-      overflow: hidden;
-      min-height: 560px;
-    }
-
-    .calendar-toolbar {
-      min-height: 56px;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 14px;
-      gap: 12px;
-    }
-
-    .week-grid {
-      display: grid;
-      grid-template-columns: 70px repeat(7, minmax(70px, 1fr));
-      min-height: 504px;
-    }
-
-    .time-col,
-    .day-col {
-      border-right: 1px solid var(--line);
-      position: relative;
-      min-width: 0;
-    }
-
-    .day-col:last-child { border-right: 0; }
-
-    .day-head {
-      height: 58px;
-      border-bottom: 1px solid var(--line);
-      display: grid;
-      place-items: center;
-      font-size: 0.82rem;
-      color: var(--muted);
-    }
-
-    .day-head strong {
-      color: var(--ink);
-      font-size: 1rem;
-      display: block;
-      margin-top: 2px;
-    }
-
-    .day-col.today .day-head {
-      outline: 2px solid var(--ink);
-      outline-offset: -6px;
-    }
-
-    .slots {
-      height: calc(100% - 58px);
-      background:
-        repeating-linear-gradient(to bottom, transparent 0 58px, var(--line) 59px 60px);
-      position: relative;
-    }
-
-    .time-col .slots {
-      padding-top: 48px;
-      color: var(--muted);
-      font-size: 0.75rem;
-      display: grid;
-      grid-template-rows: repeat(7, 58px);
-      place-items: start center;
-    }
-
-    .event {
-      position: absolute;
-      left: 8px;
-      right: 8px;
-      border: 1px solid rgba(16, 17, 20, 0.12);
-      border-radius: 7px;
-      padding: 8px;
-      font-size: 0.78rem;
-      line-height: 1.3;
-      box-shadow: 0 10px 26px rgba(16, 17, 20, 0.08);
-      cursor: pointer;
-      overflow: hidden;
-    }
-
-    .event strong {
-      display: flex;
-      align-items: start;
-      justify-content: space-between;
-      gap: 4px;
-      color: #171717;
-    }
-
-    .event small { display: block; margin-top: 3px; color: rgba(16, 17, 20, 0.62); }
-    .event.green { background: #dff5e8; }
-    .event.gold { background: #f7dc9f; }
-    .event.rose { background: #f7ccd5; }
-    .event.sky { background: #cfe9fa; }
-    .event.lilac { background: #ddd2fb; }
-
-    .event-menu {
-      width: 24px;
-      height: 24px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: rgba(255,255,255,0.72);
-      color: #111;
-      cursor: pointer;
-      flex: 0 0 auto;
-    }
-
-    .side-panel {
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--paper);
-      min-height: 560px;
-      padding: 16px;
-    }
-
-    .event-detail {
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 14px;
-      background: rgba(16, 17, 20, 0.035);
-      margin-bottom: 14px;
-    }
-
-    body.dark .event-detail { background: rgba(255,255,255,0.04); }
-
-    .event-detail h3 { margin: 0 0 8px; }
-    .event-detail p { margin: 0; color: var(--muted); line-height: 1.55; }
-
-    .label-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      min-height: 32px;
-      cursor: default;
-      color: var(--muted);
-      font-size: 0.84rem;
-    }
-
-    .capture {
-      display: grid;
-      gap: 10px;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 98px;
-      resize: vertical;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--paper);
-      color: var(--ink);
-      padding: 12px;
-    }
-
-    .parsed {
-      min-height: 92px;
-      border: 1px dashed var(--line);
-      border-radius: var(--radius);
-      padding: 12px;
-      color: var(--muted);
-      line-height: 1.52;
-    }
-
-    .split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .troubleshoot-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .confused-item {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 12px;
-      background: var(--paper);
-    }
-
-    .confused-item strong { display: block; margin-bottom: 4px; }
-    .confused-item span { color: var(--muted); font-size: 0.9rem; }
-
-    .compat-row {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .logo-tile {
-      min-height: 104px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--paper);
-      display: grid;
-      place-items: center;
-      text-align: center;
-      gap: 8px;
-      color: var(--muted);
-      padding: 16px;
-    }
-
-    .logo-dot {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: var(--mint);
-      display: grid;
-      place-items: center;
-      color: #153d2b;
-      font-weight: 900;
-    }
-
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .price {
-      font-size: 2rem;
-      font-weight: 900;
-      margin: 12px 0 2px;
-    }
-
-    .price small { color: var(--muted); font-size: 0.92rem; font-weight: 650; }
-
-    .card ul {
-      margin: 18px 0;
-      padding-left: 18px;
-      color: var(--muted);
-      line-height: 1.85;
-    }
-
-    .faq {
-      display: grid;
-      gap: 10px;
-    }
-
-    .faq-item {
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--paper);
-      overflow: hidden;
-    }
-
-    .faq-question {
-      width: 100%;
-      min-height: 58px;
-      border: 0;
-      border-radius: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      text-align: left;
-      font-weight: 760;
-    }
-
-    .faq-answer {
-      display: none;
-      padding: 0 14px 16px;
-      color: var(--muted);
-      line-height: 1.65;
-    }
-
-    .faq-item.open .faq-answer { display: block; }
-
-    .final-cta {
-      text-align: center;
-      padding: 90px 0 100px;
-    }
-
-    .final-cta h2 { margin: 0 auto 18px; max-width: 820px; }
-    .final-cta p { max-width: 620px; margin: 0 auto 26px; color: var(--muted); line-height: 1.6; }
-
-    .footer {
-      border-top: 1px solid var(--line);
-      padding: 28px 0;
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .footer-inner {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      flex-wrap: wrap;
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 80;
-      display: none;
-      place-items: center;
-      padding: 20px;
-      background: rgba(16, 17, 20, 0.42);
-      backdrop-filter: blur(8px);
-    }
-
-    .modal-backdrop.open { display: grid; }
-
-    .modal {
-      width: min(520px, 100%);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--paper);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-
-    .modal h3 { margin: 0 0 14px; }
-    .form-grid { display: grid; gap: 10px; }
-    .form-grid label { display: grid; gap: 6px; color: var(--muted); font-size: 0.9rem; }
-    .form-grid input, .form-grid select {
-      min-height: 42px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 0 12px;
-      background: var(--paper);
-      color: var(--ink);
-    }
-
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .menu-pop {
-      position: fixed;
-      z-index: 90;
-      display: none;
-      width: 190px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--paper);
-      box-shadow: 0 18px 60px rgba(16, 17, 20, 0.18);
-      padding: 6px;
-    }
-
-    .menu-pop.open { display: grid; }
-
-    .menu-item {
-      border: 0;
-      width: 100%;
-      justify-content: flex-start;
-      display: flex;
-      align-items: center;
-      text-align: left;
+    ::-webkit-scrollbar-track {
       background: transparent;
     }
+    ::-webkit-scrollbar-thumb {
+      background: var(--line);
+      border-radius: 99px;
+    }
 
-    .menu-item:hover { background: rgba(16, 17, 20, 0.06); }
-    body.dark .menu-item:hover { background: rgba(255,255,255,0.08); }
-
-    @media (max-width: 980px) {
-      .nav-links { display: none; }
-      .hero { min-height: auto; }
-      .hero-stage { min-height: 360px; }
-      .section-head,
-      .calendar-demo,
-      .split {
-        grid-template-columns: 1fr;
+    /* High Velocity Spin with Inertia Acceleration and Deceleration */
+    @keyframes highVelocitySpin {
+      0% {
+        transform: rotate(0deg) scale(1);
       }
-      .feature-grid,
-      .pricing-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      30% {
+        transform: rotate(180deg) scale(1.15);
       }
-      .compat-row {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+      70% {
+        transform: rotate(1440deg) scale(1.2);
       }
-      .week-grid {
-        grid-template-columns: 52px repeat(7, minmax(54px, 1fr));
-      }
-      .event {
-        left: 4px;
-        right: 4px;
-        padding: 6px;
-        font-size: 0.68rem;
+      100% {
+        transform: rotate(2160deg) scale(1);
       }
     }
 
-    @media (max-width: 680px) {
-      .shell { width: min(100% - 22px, 1180px); }
-      .nav-inner { min-height: 62px; }
-      .nav-actions .pill { display: none; }
-      h1 { font-size: clamp(3rem, 16vw, 5.4rem); }
-      section { padding: 62px 0; }
-      .hero-stage { min-height: 300px; }
-      .screen { transform: none; }
-      .assistant-card {
-        position: relative;
-        right: auto;
-        bottom: auto;
-        margin-top: -22px;
-      }
-      .floating-chip { display: none; }
-      .feature-grid,
-      .pricing-grid,
-      .compat-row {
-        grid-template-columns: 1fr;
-      }
-      .calendar-board { overflow-x: auto; }
-      .week-grid { min-width: 720px; }
-      .calendar-toolbar { min-width: 720px; }
-      .side-panel { min-height: auto; }
+    .sparkle-spin-active {
+      animation: highVelocitySpin 1.8s cubic-bezier(0.76, 0, 0.18, 1) forwards;
+    }
+
+    /* Smooth character typing cursor */
+    @keyframes blinkCursor {
+      50% { border-color: transparent; }
+    }
+    .typing-cursor {
+      border-right: 2px solid var(--emerald);
+      animation: blinkCursor 0.75s step-end infinite;
+    }
+
+    /* Initial Fly-in Entrances combined with gentle Floating paths */
+    @keyframes entranceLeft {
+      0% { transform: translateX(-150px) scale(0.8); opacity: 0; }
+      100% { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    @keyframes entranceRight {
+      0% { transform: translateX(150px) scale(0.8); opacity: 0; }
+      100% { transform: translateX(0) scale(1); opacity: 1; }
+    }
+
+    /* Velvet Floating Animations for Cosmic Widgets */
+    @keyframes floatY1 {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-15px) rotate(2deg); }
+    }
+    @keyframes floatY2 {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(-3deg); }
+    }
+    @keyframes floatY3 {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(1.5deg); }
+    }
+
+    .floater-wrapper-1 {
+      animation: entranceLeft 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .floater-wrapper-2 {
+      animation: entranceRight 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .animate-float-1 {
+      animation: floatY1 8s ease-in-out infinite;
+    }
+    .animate-float-2 {
+      animation: floatY2 10s ease-in-out infinite 1s;
+    }
+    .animate-float-3 {
+      animation: floatY3 9s ease-in-out infinite 0.5s;
+    }
+
+    /* Reduce motion handles */
+    .reduce-motion-active .animate-float-1,
+    .reduce-motion-active .animate-float-2,
+    .reduce-motion-active .animate-float-3 {
+      animation-play-state: paused !important;
+      transform: none !important;
+      opacity: 0.25;
+      filter: blur(1px);
     }
   </style>
 </head>
-<body>
-  <header class="nav">
-    <div class="shell nav-inner">
-      <a class="brand" href="#top" aria-label="NEXTcalendar home">
-        <img src="favicon.svg.png" alt="NEXTcalendar logo" class="brand-icon" />
-        <span>NEXTcalendar</span>
+<body class="min-h-screen flex flex-col relative overflow-x-hidden">
+
+  <!-- Custom Locomotive Cursor (Only the clean pointer, safe from triggering hover glitches) -->
+  <div id="customCursor" class="fixed top-0 left-0 pointer-events-none z-[9999] hidden md:block select-none opacity-0" style="width: 24px; height: 24px; transform: translate3d(0, 0, 0); will-change: transform; transition: opacity 0.15s ease;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4.5 1.5 C4.5 1 5.0 0.8 5.3 1.1 L 19.5 15.3 C 19.9 15.7 19.6 16.4 19.0 16.4 L 11.5 16.4 L 5.3 22.6 C 4.9 23.0 4.2 22.7 4.2 22.1 Z" fill="currentColor" class="text-emerald-700 dark:text-emerald-400" stroke="currentColor" stroke-width="0.5" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <!-- Header Navigation -->
+  <header class="sticky top-0 z-50 border-b border-custom backdrop-blur-xl transition-all">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-4">
+      <a class="flex items-center gap-3 font-semibold text-lg tracking-tight" href="#top">
+        <div class="w-8 h-8 rounded-md flex items-center justify-center">
+          <!-- Dynamic Light & Dark Mode Logos -->
+          <img src="https://burchweb-files.sirv.com/nextcalendar/assets/logo-light.png" class="dark:hidden w-full h-full object-contain" alt="NEXTcalendar Logo">
+          <img src="https://burchweb-files.sirv.com/nextcalendar/assets/logo-dark.png" class="hidden dark:block w-full h-full object-contain" alt="NEXTcalendar Logo">
+        </div>
+        <span class="text-[var(--ink)] text-lg">NEXTcalendar</span>
       </a>
-      <nav class="nav-links" aria-label="Primary navigation">
-        <a href="#product">Product</a>
-        <a href="#workflow">Workflow</a>
-        <a href="#security">Security</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#faq">FAQ</a>
+      
+      <!-- Desktop Menu Links -->
+      <nav class="hidden lg:flex items-center gap-10 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+        <a href="#not-slop" class="hover:text-[var(--ink)] transition-colors">Our Standard</a>
+        <a href="#integrations" class="hover:text-[var(--ink)] transition-colors">Compatibility</a>
+        <a href="#no-forms" class="hover:text-[var(--ink)] transition-colors">The Assistant</a>
+        <a href="#workflow" class="hover:text-[var(--ink)] transition-colors">Playground</a>
+        <a href="#pricing" class="hover:text-[var(--ink)] transition-colors">Pricing</a>
       </nav>
-      <div class="nav-actions">
-        <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme">◐</button>
-        <a class="pill" href="#pricing">7 day trial</a>
-        <a class="primary-btn" href="#demo">Get the app</a>
+
+      <!-- Desktop & Mobile Control Actions -->
+      <div class="flex items-center gap-2 sm:gap-4">
+        <button id="themeToggle" class="w-10 h-10 rounded-full border border-custom flex items-center justify-center text-base hover:bg-black/5 dark:hover:bg-white/5 transition-all" title="Toggle Light/Dark Theme">
+          ◐
+        </button>
+        <a class="hidden sm:inline-flex px-4.5 py-2 rounded-full border border-custom text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all" href="#pricing">
+          Start trial
+        </a>
+        <a class="hidden xs:inline-flex px-5 py-2 rounded-full bg-[var(--ink)] text-[var(--bg)] text-xs font-semibold hover:opacity-90 transition-all" href="#demo">
+          Get App
+        </a>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button id="mobileMenuBtn" class="lg:hidden w-10 h-10 rounded-full border border-custom flex items-center justify-center text-base hover:bg-black/5 dark:hover:bg-white/5 transition-all" aria-label="Toggle Navigation Menu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Drawer Overlay Menu -->
+    <div id="mobileMenu" class="hidden lg:hidden border-t border-custom bg-[var(--paper)] py-6 px-6 space-y-4 shadow-inner transition-all duration-300">
+      <nav class="flex flex-col space-y-4 text-sm font-semibold uppercase tracking-wider text-[var(--muted)]">
+        <a href="#not-slop" class="hover:text-[var(--ink)] transition-colors py-1">Our Standard</a>
+        <a href="#integrations" class="hover:text-[var(--ink)] transition-colors py-1">Compatibility</a>
+        <a href="#no-forms" class="hover:text-[var(--ink)] transition-colors py-1">The Assistant</a>
+        <a href="#workflow" class="hover:text-[var(--ink)] transition-colors py-1">Playground</a>
+        <a href="#pricing" class="hover:text-[var(--ink)] transition-colors py-1">Pricing</a>
+      </nav>
+      <div class="pt-4 border-t border-custom flex flex-col gap-3">
+        <a class="w-full text-center px-4.5 py-2.5 rounded-lg border border-custom text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all" href="#pricing">
+          Start free trial
+        </a>
+        <a class="w-full text-center px-5 py-2.5 rounded-lg bg-[var(--ink)] text-[var(--bg)] text-xs font-semibold hover:opacity-90 transition-all" href="#demo">
+          Get App
+        </a>
       </div>
     </div>
   </header>
 
-  <main id="top">
-    <section class="hero" id="demo">
-      <div class="shell">
-        <div class="hero-copy">
-          <div class="rank"><span class="sparkline"></span><span>#1 AI calendar for messy schedules</span><span class="sparkline"></span></div>
-          <h1>Your calendar fixes itself.</h1>
-          <p>NEXTcalendar turns loose notes, files, emails, and daily agenda chaos into a calendar that knows what matters.</p>
-          <div class="hero-actions">
-            <a class="store-btn" href="desktop%20ui.html">Get NEXTcalendar</a>
-            <a class="ghost-btn" href="#workflow">See how it works</a>
-          </div>
+  <main class="flex-grow">
+    
+    <!-- Hero Section (Bigger, Bolder layout featuring the Interactive Particle Canvas and Floating Elements) -->
+    <section class="pt-10 pb-12 md:pt-14 md:pb-20 max-w-7xl mx-auto px-6 relative" id="top">
+      <div class="text-center max-w-5xl mx-auto relative z-10">
+        
+        <!-- Smooth Motion Switch (Premium vertically stacked layout on top) -->
+        <div class="flex flex-col items-center justify-center gap-2 mb-8 relative z-20 select-none">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--muted)]">Reduce Motion</span>
+          <button id="motionToggle" class="relative inline-flex items-center h-7 rounded-full w-14 bg-black/5 dark:bg-white/5 border border-custom focus:outline-none transition-colors duration-300">
+            <!-- Sliding background knob (Default left / gray) -->
+            <span id="motionToggleKnob" class="absolute left-[3px] w-5 h-5 rounded-full bg-neutral-400 dark:bg-neutral-600 transition-transform duration-300 transform translate-x-0 shadow-sm pointer-events-none"></span>
+          </button>
         </div>
 
-        <div class="hero-stage" aria-label="NEXTcalendar product preview">
-          <div class="floating-chip">8 day streak · 4 conflicts fixed</div>
-          <div class="screen">
-            <div class="screen-bar">
-              <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
-              <span>NEXTcalendar live schedule</span>
-              <span>Auto</span>
-            </div>
-            <img class="product-shot" src="nextcalendar-current-ui.png" alt="Current NEXTcalendar calendar interface" />
+        <!-- Combined Interactive Hero Stage -->
+        <div id="motionAreaWrapper" class="w-full h-[400px] sm:h-[500px] md:h-[580px] relative overflow-hidden select-none mb-6 flex items-center justify-center">
+          
+          <!-- Interactive Particle Canvas (Takes up full background) -->
+          <canvas id="particleCanvas" class="absolute inset-0 w-full h-full block transition-opacity duration-300 z-0"></canvas>
+          
+          <!-- Static fallback heading when Reduce Motion is ON -->
+          <div id="staticHeroText" class="hidden absolute inset-0 flex flex-col justify-center items-center text-center px-4 pointer-events-none z-10">
+            <h1 class="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[1.05] text-[var(--ink)] max-w-5xl">
+              The calendar<br>that coordinates<br>your day.
+            </h1>
           </div>
-          <div class="assistant-card">
-            <div class="assistant-top"><span>AI details</span><span>Smart</span></div>
-            <h3>Planning Session</h3>
-            <p>Tagged as event, connected to Google Meet, agenda created, and a follow-up reminder drafted for tomorrow.</p>
-          </div>
-        </div>
-      </div>
-    </section>
 
-    <section id="product">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Calendar intelligence while you work.</h2>
-          <p>NEXTcalendar is able to turn text and speech into a clean calendar that optimizes your schedule with minimal effort.</p>
-        </div>
-
-        <div class="feature-grid">
-          <article class="card tall">
-            <div>
-              <span class="kicker">Capture</span>
-              <h3>Write a note. Get a calendar.</h3>
-              <p>Add a rough note card and NEXTcalendar extracts the title, time, label, details, reminders, and recurrence.</p>
-            </div>
-            <div class="mini-ui capture">
-              <textarea id="noteInput">Lunch with Maya next Friday at 12, remind me 30 minutes before, mark as personal.</textarea>
-              <button class="primary-btn" id="parseNote" type="button">Analyze note</button>
-              <div class="parsed" id="parsedResult">Event · Lunch with Maya · next Friday 12:00 PM · Personal · 30 minute reminder</div>
-            </div>
-          </article>
-
-          <article class="card tall">
-            <div>
-              <span class="kicker">Density</span>
-              <h3>Fit to screen or compact.</h3>
-              <p>Switch between a calm view and a denser command-center view when the week gets full.</p>
-            </div>
-            <div class="mini-ui">
-              <span class="kicker">Information density</span>
-              <div class="density-row">
-                <button class="active" data-density="fit" type="button">Fit</button>
-                <button data-density="compact" type="button">Compact</button>
+          <!-- Floater 1: Left Top Glass Schedule Widget -->
+          <div id="floater1" class="animate-float-1 absolute left-2 lg:left-8 top-10 z-20 transition-all duration-300 hidden sm:block">
+            <div class="px-4 py-3 rounded-2xl border border-emerald-500/20 bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(18,19,26,0.7)] backdrop-blur-lg flex items-center gap-3 shadow-md max-w-[210px] text-left">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                </svg>
               </div>
-            </div>
-          </article>
-
-          <article class="card tall">
-            <div>
-              <span class="kicker">Labels</span>
-              <h3>AI labeling with override.</h3>
-              <p>Events, due dates, recurring events, assignments, and tasks get labeled automatically, with manual control when the AI is unsure.</p>
-            </div>
-            <div class="label-row">
-              <span class="tag">Event</span>
-              <span class="tag">Due date</span>
-              <span class="tag">Recurring until May 30</span>
-              <span class="tag">Assignment</span>
-              <span class="tag">Family</span>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="workflow">
-      <div class="shell">
-        <div class="section-head">
-          <h2>A live calendar with an AI sidecar.</h2>
-          <p>Click events for generated details, use the menu for edits and sharing, and resolve ambiguous items from one troubleshooting queue.</p>
-        </div>
-
-        <div class="calendar-demo">
-          <div class="calendar-board">
-            <div class="calendar-toolbar">
-              <strong>May 12 - May 18, 2025</strong>
-              <div class="nav-actions">
-                <button class="ghost-btn" type="button" id="agendaBtn">Generate agenda</button>
-                <button class="ghost-btn" type="button" id="voiceBtn">Voiceover</button>
-              </div>
-            </div>
-            <div class="week-grid" id="weekGrid">
-              <div class="time-col">
-                <div class="day-head"></div>
-                <div class="slots"><span>9 AM</span><span>10 AM</span><span>11 AM</span><span>12 PM</span><span>1 PM</span><span>2 PM</span><span>3 PM</span></div>
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800 dark:text-emerald-400 leading-none">Lunch with Joe Mama</span>
+                <span class="text-[9px] text-[var(--muted)] font-mono block mt-1">Thursday @ 4:15 PM</span>
               </div>
             </div>
           </div>
 
-          <aside class="side-panel">
-            <div class="event-detail" id="detailPanel">
-              <span class="kicker">AI details</span>
-              <h3>Planning Session</h3>
-              <p>Agenda, Zoom or Google Meet link, assignment materials, and follow-up reminders appear here when an event is selected.</p>
-              <div class="label-row">
-                <span class="tag">Event</span>
-                <span class="tag">Google Meet</span>
-                <span class="tag">Confident</span>
+          <!-- Floater 2: Left Bottom Checklist Progress Card -->
+          <div id="floater2" class="animate-float-3 absolute left-0 lg:left-14 bottom-10 z-20 transition-all duration-300 hidden md:block">
+            <div class="px-4 py-3.5 rounded-2xl border border-custom bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(18,19,26,0.7)] backdrop-blur-lg flex flex-col gap-2.5 shadow-md w-[200px] text-left">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink)]">Creating your Agenda</span>
               </div>
-            </div>
-
-            <div class="event-detail">
-              <span class="kicker">Troubleshooting</span>
-              <div class="troubleshoot-list" id="troubleshootList">
-                <div class="confused-item">
-                  <div><strong>"Review final draft"</strong><span>Event, task, or due date?</span></div>
-                  <button class="ghost-btn resolve-btn" type="button">Confirm</button>
-                </div>
-                <div class="confused-item">
-                  <div><strong>"Every other Tuesday"</strong><span>Recurring event pattern?</span></div>
-                  <button class="ghost-btn resolve-btn" type="button">Confirm</button>
+              <div class="space-y-1">
+                <p class="text-[9px] font-bold text-[var(--muted)]">Almost done...</p>
+                <div class="w-full h-1.5 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+                  <div class="w-4/5 h-full bg-blue-500 rounded-full"></div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div class="event-detail">
-              <span class="kicker">Agenda</span>
-              <p id="agendaText">Team sync, planning session, design review, project deadline, and manager one-on-one.</p>
+          <!-- Floater 3: Right Top Rocket Launch Widget -->
+          <div id="floater3" class="animate-float-2 absolute right-2 lg:right-8 top-10 z-20 transition-all duration-300 hidden sm:block">
+            <div class="px-4 py-3 rounded-2xl border border-custom bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(18,19,26,0.7)] backdrop-blur-lg flex items-center gap-3 shadow-md max-w-[210px] text-left">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <svg class="w-4.5 h-4.5 transform -rotate-45" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 0M12 14.25v6.5M10.25 18H13.75M12 1.5l1.5 5.25L18 8.25l-4.5 1.5L12 15l-1.5-5.25L6 8.25l4.5-1.5L12 1.5z" />
+                </svg>
+              </div>
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-700 dark:text-indigo-400 block leading-none">Moon landing</span>
+                <span class="text-[9px] text-[var(--muted)] font-mono block mt-1">Soundstage Primed</span>
+              </div>
             </div>
-          </aside>
+          </div>
+
+          <!-- Floater 4: Right Bottom Deep Space Network Indicator -->
+          <div id="floater4" class="animate-float-1 absolute right-0 lg:right-14 bottom-10 z-20 transition-all duration-300 hidden md:block">
+            <div class="px-4 py-3 rounded-2xl border border-emerald-500/20 bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(18,19,26,0.7)] backdrop-blur-lg flex items-center gap-3 shadow-md max-w-[200px] text-left">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3a9 9 0 100 18 9 9 0 000-18z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2 12h20M2.5 10c1.5-1.5 5-2.5 9.5-2.5s8 1 9.5 2.5m-19 4c1.5 1.5 5 2.5 9.5 2.5s8-1 9.5-2.5" />
+                </svg>
+              </div>
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800 dark:text-emerald-400 block leading-none">Planning meetings</span>
+                <span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block mt-1">Looking at agendas</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Center Text Sub-section (Spaced beautifully beneath) -->
+        <div class="text-center max-w-4xl mx-auto relative z-10 space-y-12">
+          <p class="text-xl sm:text-2xl text-[var(--muted)] leading-relaxed max-w-3xl mx-auto">
+            A friendly, easy-to-use planner. No fake events, no complicated setups. Just straightforward planning.
+          </p>
+          
+          <div class="flex flex-wrap justify-center gap-4">
+            <a class="px-6 py-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-base flex items-center gap-2 transition-all" href="#demo">
+              <span>Get NEXTcalendar Free</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              </svg>
+            </a>
+            <a class="px-8 py-4 rounded-xl border border-custom text-[var(--ink)] font-semibold text-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all" href="#workflow">
+              Learn workflow
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Product Image Wrapper with Smooth Mouse-Follow Parallax -->
+      <div class="relative max-w-5xl mx-auto mt-20">
+        <div id="tiltCard" class="relative bg-[var(--paper)] rounded-2xl border border-custom shadow-lg overflow-hidden opacity-0 translate-y-4" style="transition: opacity 0.5s ease-out, transform 0.5s ease-out;">
+          
+          <div class="flex items-center justify-between px-5 py-3.5 border-b border-custom bg-black/[0.02] dark:bg-white/[0.02] select-none">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+              <span class="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+              <span class="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+            </div>
+            <div class="text-xs font-semibold tracking-wider uppercase text-[var(--muted)]">
+              NEXTcalendar Interface
+            </div>
+            <span class="text-xs text-[var(--muted)] font-mono">v2.4</span>
+          </div>
+          
+          <div class="relative w-full h-auto overflow-hidden bg-slate-50 dark:bg-slate-900 border-b border-custom">
+            <img 
+              id="productionHeroImage"
+              src="https://burchweb-inc.github.io/NEXTcalendar-PROTOTYPE/nextcalendar-current-ui.png" 
+              alt="NEXTcalendar Interface Screenshot" 
+              class="w-full h-auto object-cover block select-none pointer-events-none"
+              onerror="this.src='https://images.unsplash.com/photo-1611224885990-ab7363d1f2a9?auto=format&fit=crop&w=1200&q=80'"
+            />
+          </div>
+
+          <div class="px-6 py-4 bg-black/[0.01] dark:bg-white/[0.01] flex items-center justify-between text-sm text-[var(--muted)] select-none">
+            <span>Your actual calendar view</span>
+            <span class="font-mono text-xs">Active Sync Connection</span>
+          </div>
+
         </div>
       </div>
     </section>
 
-    <section id="security">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Built for teams, families, and organizations.</h2>
-          <p>Share free slots without exposing private details, coordinate across an organization, and keep parent or admin controls in the same interface.</p>
+    <!-- Expanded Section 1: We are literally not AI slop -->
+    <section id="not-slop" class="py-24 border-t border-custom bg-black/[0.01] dark:bg-white/[0.01]">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
+          <div class="lg:col-span-6 space-y-6">
+            <span class="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400">Our Standard</span>
+            <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-[var(--ink)] leading-tight">
+              Not AI slop.
+            </h2>
+            <p class="text-base sm:text-lg text-[var(--muted)] leading-relaxed">
+              Most "smart" calendars make wild, random guesses. They will confidently schedule your group project for February 30th, or write back weird messages like "meeting with undefined." 
+            </p>
+            <p class="text-base sm:text-lg text-[var(--muted)] leading-relaxed">
+              That's what we call calendar slop, and it's exhausting. 
+            </p>
+            <p class="text-base sm:text-lg text-[var(--muted)] leading-relaxed">
+              We built NEXTcalendar with strict, predictable parsing parameters. Our program carefully reads your natural text, extracts precise details, and always asks you if it needs clarification. No hallucinations. No guesswork. Just real, reliable utility.
+            </p>
+          </div>
+
+          <!-- Comparative UI Graphic -->
+          <div class="lg:col-span-6 border border-custom bg-[var(--paper)] rounded-2xl p-8 shadow-sm space-y-6 select-none">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-[var(--muted)] border-b border-custom pb-3">The Blueprint Comparison</h4>
+            
+            <div class="space-y-4">
+              <!-- Slop Tool -->
+              <div class="p-5 rounded-xl border border-red-500/20 bg-red-500/5">
+                <div class="flex items-center gap-2 mb-2 text-red-600 dark:text-red-400 font-bold text-xs uppercase tracking-wider">
+                  ❌ Generative Slop Calendars
+                </div>
+                <p class="text-xs text-[var(--muted)] italic">"I went ahead and guessed you wanted a meeting at 2:00 AM on a Tuesday with an unknown placeholder contact, and created 3 extra duplicate draft events because that's organization."</p>
+              </div>
+
+              <!-- NEXTcalendar -->
+              <div class="p-5 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+                <div class="flex items-center gap-2 mb-2 text-emerald-700 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                  ✔ The NEXTcalendar Standard
+                </div>
+                <p class="text-xs text-[var(--muted)]">"I've looked at your uploaded agenda and I've made events. However, could you just clarify if you were meeting with Julia at the gym or at the library? You have conflicting statements."</p>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Expanded Section 2: Bridging the Gap -->
+    <section id="integrations" class="py-24 border-t border-custom">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
+          <div class="lg:col-span-6 order-last lg:order-first">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="p-6 border border-custom bg-[var(--paper)] rounded-xl text-center shadow-sm space-y-2">
+                <div class="font-extrabold text-blue-500 text-sm">Google Calendar</div>
+                <p class="text-[11px] text-[var(--muted)] leading-relaxed">Great for Google Workspace. Not good for Microslop 365 Copilot Plus AI Enterprise Pro Office Max Office Depot Walmart Costco (or whatever microsoft is calling it now)</p>
+              </div>
+              <div class="p-6 border border-custom bg-[var(--paper)] rounded-xl text-center shadow-sm space-y-2">
+                <div class="font-extrabold text-rose-500 text-sm">Apple Calendar</div>
+                <p class="text-[11px] text-[var(--muted)] leading-relaxed">Perfect for iOS and Mac devices. Not so much for PC.</p>
+              </div>
+              <div class="p-6 border border-custom bg-[var(--paper)] rounded-xl text-center shadow-sm space-y-2 col-span-2">
+                <div class="font-extrabold text-indigo-500 text-sm">Corporate & Outlook Platforms</div>
+                <p class="text-[11px] text-[var(--muted)] leading-relaxed">Wannabe the next universal calendar. It's not working well.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-6 space-y-6">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">Compatibility</span>
+            <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-[var(--ink)] leading-tight">
+              Bridging a ton of other platforms.
+            </h2>
+            <p class="text-base sm:text-lg text-[var(--muted)] leading-relaxed">
+              We know the absolute last thing you want is a fifth calendar account to check, coordinate, or worry about. 
+            </p>
+            <p class="text-base sm:text-lg text-[var(--muted)] leading-relaxed">
+              We aren’t here to replace the system you’ve used for years. Think of NEXTcalendar as a beautiful, friendly translation layer that floats right on top of Google Calendar, Apple iCal, and Outlook. 
+            </p>
+            <p class="text-base sm:text-lg text-[var(--muted)] leading-relaxed">
+              It connects securely, reads your current schedule, and writes back updates instantly. You get the comfort of your old calendar with the effortless design of our modern interface.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Expanded Section 3: No Complicated Forms -->
+    <section id="no-forms" class="py-24 border-t border-custom bg-black/[0.01] dark:bg-white/[0.01]">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
+          <div class="lg:col-span-6 space-y-6">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold">The Input</span>
+            <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-[var(--ink)] leading-tight">
+              Absolutely no complicated forms.
+            </h2>
+            <p class="text-base sm:text-lg text-[var(--muted)] leading-relaxed">
+              Who decided that creating an event required selecting twenty different dropdown menus, writing descriptions, ticking checkboxes, and picking visual alert times? It feels like filling out tax papers just to schedule soccer practice.
+            </p>
+            <p class="text-base sm:text-lg text-[var(--muted)] leading-relaxed font-medium">
+              We've built tools for every style: you can instantly upload documents (like class syllabus sheets or game rosters), copy and paste lists directly, or download our mobile apps, browser extensions, and Workspace add-ons to build schedule layouts cleanly with our helper agents.
+            </p>
+          </div>
+
+          <!-- Dynamic MC Question Sandbox Widget (Conversational Chat Bubble UI with Smooth Height Transitions) -->
+          <div id="sandboxWidget" class="lg:col-span-6 p-8 rounded-2xl border border-custom bg-[var(--paper)] shadow-sm space-y-6 relative overflow-hidden min-h-[500px] flex flex-col justify-between transition-[background-color,border-color,color] duration-200">
+            <div class="flex items-center justify-between border-b border-custom pb-3 select-none">
+              <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Assistant Interface</span>
+              <span class="text-[10px] text-[var(--muted)] font-bold uppercase tracking-wider">Quick Check</span>
+            </div>
+            
+            <div class="flex-grow flex flex-col justify-center space-y-6">
+              <!-- Gemini-style Assistant Chat Bubble -->
+              <div class="flex gap-4 items-start bg-slate-50 dark:bg-slate-900/60 p-5 rounded-2xl border border-custom">
+                <!-- Smart Sparkle Icon Avatar with Inertial Physics -->
+                <div class="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-700 dark:text-emerald-400 overflow-hidden">
+                  <svg id="sparkleIcon" class="w-5 h-5 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2c-.3 0-.5.2-.6.4l-2.4 5.6-5.6 2.4c-.2.1-.4.3-.4.6s.2.5.4.6l5.6 2.4 2.4 5.6c.1.2.3.4.6.4s.5-.2.6-.4l2.4-5.6 5.6-2.4c.2-.1.4-.3.4-.6s-.2-.5-.4-.6l-5.6-2.4-2.4-5.6c-.1-.2-.3-.4-.6-.4z"/>
+                  </svg>
+                </div>
+                <!-- Chat Message Content (Slightly larger, non-italicized, friendly message style) -->
+                <div class="space-y-2 text-sm sm:text-base leading-relaxed">
+                  <p class="font-bold text-emerald-700 dark:text-emerald-400 text-xs uppercase tracking-wider select-none">NEXTcalendar Assistant</p>
+                  <p id="assistantSpeech" class="text-[var(--ink)] transition-all duration-300">
+                    Quick question before I proceed: I see you wrote down <span class="font-semibold underline decoration-dotted decoration-emerald-500">Meet Julia at the gym or maybe library after school, around 3:30 or 5:00</span>.
+                  </p>
+                  <p id="assistantSubSpeech" class="text-[var(--muted)] transition-all duration-300">
+                    Which location and time would you like me to book for you?
+                  </p>
+                </div>
+              </div>
+
+              <!-- State 1: Questionnaire Content (Strict Slide and Fade transition) -->
+              <div id="sandboxContent" class="space-y-6 transition-all duration-300">
+                <!-- Question 1 -->
+                <div class="space-y-2.5">
+                  <label class="text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider">Where are you meeting up?</label>
+                  <div class="grid grid-cols-2 gap-3">
+                    <button onclick="chooseMcOption(1, 'Library', this)" class="q1-btn p-3 text-left rounded-xl border-2 border-emerald-600 bg-emerald-500/5 transition-all text-xs font-semibold text-[var(--ink)] flex items-center gap-2">
+                      <span class="w-4 h-4 rounded-full border border-emerald-700 bg-emerald-700 text-white flex items-center justify-center text-[8px] font-bold q1-check">✓</span>
+                      School Library
+                  </button>
+                    <button onclick="chooseMcOption(1, 'Gym', this)" class="q1-btn p-3 text-left rounded-xl border border-custom bg-[var(--paper)] hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-semibold text-[var(--ink)] flex items-center gap-2">
+                      <span class="w-4 h-4 rounded-full border border-custom flex items-center justify-center text-[8px] font-bold q1-check"></span>
+                      Training Gym
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="space-y-2.5">
+                  <label class="text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider">And what time works best?</label>
+                  <div class="grid grid-cols-2 gap-3">
+                    <button onclick="chooseMcOption(2, '3:30 PM', this)" class="q2-btn p-3 text-left rounded-xl border-2 border-emerald-600 bg-emerald-500/5 transition-all text-xs font-semibold text-[var(--ink)] flex items-center gap-2">
+                      <span class="w-4 h-4 rounded-full border border-emerald-700 bg-emerald-700 text-white flex items-center justify-center text-[8px] font-bold q2-check">✓</span>
+                      3:30 PM (After class)
+                    </button>
+                    <button onclick="chooseMcOption(2, '5:00 PM', this)" class="q2-btn p-3 text-left rounded-xl border-2 border-custom bg-[var(--paper)] hover:bg-black/5 dark:hover:bg-white/5 transition-all text-xs font-semibold text-[var(--ink)] flex items-center gap-2">
+                      <span class="w-4 h-4 rounded-full border border-custom flex items-center justify-center text-[8px] font-bold q2-check"></span>
+                      5:00 PM (Before dinner)
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Action Footer -->
+                <div class="pt-4 border-t border-custom flex flex-wrap items-center justify-between gap-4">
+                  <div class="text-xs">
+                    <span class="text-[var(--muted)] block">Ready to confirm:</span>
+                    <strong id="mcPreview" class="text-[var(--ink)] font-semibold">Julia · Library · 3:30 PM</strong>
+                  </div>
+                  <button onclick="startWaterfallFlow()" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all shadow-md shadow-emerald-700/10">
+                    Continue
+                  </button>
+                </div>
+              </div>
+
+              <!-- State 2: Ghost Loading Shimmer Loader (Smooth Transition Heights) -->
+              <div id="ghostLoader" class="hidden space-y-6 py-4 transition-all duration-300">
+                <div class="space-y-3 animate-pulse">
+                  <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+                  <div class="h-10 bg-slate-100 dark:bg-slate-900 rounded-xl w-full"></div>
+                </div>
+                <div class="space-y-3 animate-pulse pt-2">
+                  <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div>
+                  <div class="h-24 bg-slate-100 dark:bg-slate-900 rounded-xl w-full"></div>
+                </div>
+              </div>
+
+              <!-- State 3: Finalized Ticket Completed Widget (Waterfall and Character Type Effect) -->
+              <div id="finalizedWidget" class="hidden space-y-6 opacity-0 translate-y-4 transition-all duration-500 ease-out">
+                <div class="bg-emerald-500/5 border border-emerald-500/20 p-5 rounded-2xl flex items-start gap-4">
+                  <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shadow-inner">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div class="space-y-1">
+                    <h4 class="text-sm font-bold text-emerald-800 dark:text-emerald-400">Event Structured</h4>
+                    <p class="text-xs text-[var(--muted)]">Calculated and mapped onto your agenda ticket successfully.</p>
+                  </div>
+                </div>
+
+                <!-- Finished Premium Ticket Widget (Rounded Glassmorphism Design) -->
+                <div class="border border-emerald-500/20 rounded-2xl p-6 bg-slate-50/50 dark:bg-slate-900/40 backdrop-blur-md relative overflow-hidden shadow-sm">
+                  <!-- Decorative Ticket Notch cuts -->
+                  <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[var(--paper)] border border-custom"></div>
+                  <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[var(--paper)] border border-custom"></div>
+
+                  <div class="flex justify-between items-center text-[10px] font-bold text-[var(--muted)] uppercase tracking-wider pb-3 border-b border-dashed border-custom">
+                    <span>Final Schedule Ticket</span>
+                    <span class="text-emerald-600 dark:text-emerald-400">Confirmed Ready</span>
+                  </div>
+                  <div class="space-y-1.5 pt-4">
+                    <span class="text-[10px] text-[var(--muted)] uppercase tracking-wider">Event Name</span>
+                    <!-- Typing Element Container -->
+                    <h3 class="text-xl font-bold text-[var(--ink)] flex items-center min-h-[28px]" id="finalTitleContainer">
+                      <span id="finalTitleText" class="typing-cursor pr-0.5"></span>
+                    </h3>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4 pt-4 mt-2">
+                    <div>
+                      <span class="text-[10px] text-[var(--muted)] uppercase tracking-wider block">Where</span>
+                      <strong class="text-sm font-semibold" id="finalLocation">Library</strong>
+                    </div>
+                    <div>
+                      <span class="text-[10px] text-[var(--muted)] uppercase tracking-wider block">When</span>
+                      <strong class="text-sm font-semibold" id="finalTime">Thursday @ 3:30 PM</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sync actions -->
+                <div class="flex gap-3 pt-2">
+                  <button onclick="addMcEventToGridAndReset()" class="flex-grow py-3 bg-[var(--ink)] text-[var(--bg)] text-xs font-bold uppercase tracking-wider rounded-lg hover:opacity-90 transition-all text-center">
+                    Plot to Live Playground
+                  </button>
+                  <button onclick="resetWaterfallFlow()" class="px-5 py-3 border border-custom text-[var(--ink)] text-xs font-semibold rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                    Reset Flow
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Note Parser Demo Section -->
+    <section class="py-24 max-w-7xl mx-auto px-6 border-t border-custom">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+        
+        <div class="lg:col-span-1">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Smart Text Reader</span>
+          <h3 class="text-2xl font-bold mt-2 mb-4">Try typing a note</h3>
+          <p class="text-sm text-[var(--muted)] leading-relaxed mb-8">
+            Type out an event description or select one of the baseline templates to see how our program structures data cleanly.
+          </p>
+
+          <div class="space-y-3">
+            <button onclick="setParserPreset('Soccer practice tomorrow at 4:30 PM with the team.')" class="w-full text-left px-4 py-3.5 rounded-xl border border-custom bg-[var(--paper)] text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all flex items-center justify-between">
+              <span>Practice template</span>
+              <span class="text-[var(--muted)]">→</span>
+            </button>
+            <button onclick="setParserPreset('Final exam study group on Thursday from 2 to 4 PM.')" class="w-full text-left px-4 py-3.5 rounded-xl border border-custom bg-[var(--paper)] text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all flex items-center justify-between">
+              <span>Study group template</span>
+              <span class="text-[var(--muted)]">→</span>
+            </button>
+          </div>
         </div>
 
-        <div class="split">
-          <div class="card">
-            <span class="kicker">Visibility</span>
-            <h3>Security modes</h3>
-            <p>Choose private, public to organization, or managed organization access. Others see availability when allowed, not your whole calendar.</p>
-            <div class="mini-ui">
-              <label class="kicker" for="visibilityMode">Calendar security</label>
-              <select id="visibilityMode" style="width:100%; margin-top:10px; min-height:42px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink); padding:0 10px;">
-                <option>Private - only free slots</option>
-                <option>Public to organization</option>
-                <option>Parent controlled</option>
+        <div class="lg:col-span-2 p-8 rounded-2xl border border-custom bg-[var(--paper)] shadow-sm">
+          <textarea id="noteInput" class="w-full h-32 p-4 text-sm rounded-xl border border-custom bg-black/[0.01] dark:bg-white/[0.01] text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-emerald-600 transition-all font-mono">Lunch with Maya next Friday at 12, remind me 30 minutes before, mark as personal.</textarea>
+          
+          <div class="flex flex-wrap items-center justify-between gap-4 mt-6">
+            <button id="parseNote" class="px-5 py-2.5 rounded-lg bg-[var(--ink)] text-[var(--bg)] font-semibold text-xs uppercase tracking-wider hover:opacity-90 transition-all">
+              Read Note
+            </button>
+            <div id="parsedResult" class="text-xs font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-lg">
+              Extracted: Lunch with Maya · next Friday 12:00 PM · Personal · 30m reminder
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Workflow Calendar Board -->
+    <section id="workflow" class="py-24 border-t border-custom">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--ink)] mb-4">
+            Live Calendar Playground
+          </h2>
+          <p class="text-[var(--muted)] text-sm sm:text-base">
+            Click on active blocks to display properties on the sidebar panel. Try modifying density views below.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <!-- Calendar Interface -->
+          <div class="lg:col-span-2 border border-custom bg-[var(--paper)] rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-4 p-5 border-b border-custom bg-black/[0.01] dark:bg-white/[0.01]">
+              <strong class="text-base font-bold text-[var(--ink)]">May 12 - May 18, 2025</strong>
+              <div class="flex items-center gap-2">
+                <button id="agendaBtn" class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded bg-[var(--ink)] text-[var(--bg)] hover:opacity-90 transition-all">
+                  Generate Agenda
+                </button>
+              </div>
+            </div>
+
+            <!-- Grid Layout -->
+            <div class="overflow-x-auto">
+              <div class="min-w-[700px] grid grid-cols-8 divide-x divide-custom select-none" id="weekGrid">
+                
+                <!-- Time Label Column -->
+                <div class="flex flex-col text-center divide-y divide-custom bg-black/[0.01] dark:bg-white/[0.01]">
+                  <div class="h-10 flex items-center justify-center font-bold text-[9px] uppercase text-[var(--muted)] tracking-wider">Time</div>
+                  <div class="h-14 flex items-center justify-center text-xs text-[var(--muted)]">9 AM</div>
+                  <div class="h-14 flex items-center justify-center text-xs text-[var(--muted)]">10 AM</div>
+                  <div class="h-14 flex items-center justify-center text-xs text-[var(--muted)]">11 AM</div>
+                  <div class="h-14 flex items-center justify-center text-xs text-[var(--muted)]">12 PM</div>
+                  <div class="h-14 flex items-center justify-center text-xs text-[var(--muted)]">1.00 PM</div>
+                  <div class="h-14 flex items-center justify-center text-xs text-[var(--muted)]">2 PM</div>
+                  <div class="h-14 flex items-center justify-center text-xs text-[var(--muted)]">3 PM</div>
+                </div>
+
+                <!-- Days columns dynamically inserted here via script -->
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Sidebar Panel -->
+          <div class="space-y-6">
+            
+            <!-- Event Details -->
+            <div class="p-6 rounded-xl border border-custom bg-[var(--paper)] shadow-sm" id="detailPanel">
+              <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Active Selection</span>
+              <h3 class="text-lg font-bold mt-2 mb-1" id="selectedTitle">Planning Session</h3>
+              <p class="text-xs text-[var(--muted)] font-medium mb-3" id="selectedTime">Wed, May 14 · 9:30 AM - 10:30 AM</p>
+              <p class="text-sm text-[var(--muted)] leading-relaxed mb-4" id="selectedDetails">
+                Click any of the colored blocks in the calendar to load its description, conference codes, and automatic reminders instantly.
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span class="text-[10px] px-2.5 py-1 rounded bg-blue-500/10 text-blue-800 dark:text-blue-300 font-semibold" id="selectedLabel">Event</span>
+                <span class="text-[10px] px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold">Google Meet synced</span>
+              </div>
+            </div>
+
+            <!-- Troubleshooter -->
+            <div class="p-6 rounded-xl border border-custom bg-[var(--paper)] shadow-sm">
+              <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-3">Scheduling Conflicts Queue</span>
+              <div class="space-y-3" id="troubleshootList">
+                <div class="p-3 rounded-lg border border-custom bg-black/[0.01] dark:bg-white/[0.01] flex items-center justify-between gap-3" id="queue-item-1">
+                  <div>
+                    <strong class="text-xs block font-bold text-[var(--ink)]">Review final draft</strong>
+                    <span class="text-[10px] text-[var(--muted)]">Conflict detected</span>
+                  </div>
+                  <button onclick="resolveQueueItem('queue-item-1', 'Review final draft', 'Due date', 'Thu', 'rose')" class="text-[10px] px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded transition-all">
+                    Resolve
+                  </button>
+                </div>
+                <div class="p-3 rounded-lg border border-custom bg-black/[0.01] dark:bg-white/[0.01] flex items-center justify-between gap-3" id="queue-item-2">
+                  <div>
+                    <strong class="text-xs block font-bold text-[var(--ink)]">Weekly Design sync</strong>
+                    <span class="text-[10px] text-[var(--muted)]">Overlapping block</span>
+                  </div>
+                  <button onclick="resolveQueueItem('queue-item-2', 'Weekly Design sync', 'Recurring event', 'Fri', 'lilac')" class="text-[10px] px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded transition-all">
+                    Resolve
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Generated Insights -->
+            <div class="p-6 rounded-xl border border-custom bg-[var(--paper)] shadow-sm relative overflow-hidden">
+              <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 tracking-wider block mb-3">Agenda Summaries</span>
+              <p id="agendaText" class="text-xs text-[var(--muted)] leading-relaxed italic">
+                Agenda insights will appear here when you click "Generate Agenda".
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace & Integrations Section -->
+    <section id="security" class="py-24 border-t border-custom bg-black/[0.01] dark:bg-white/[0.01]">
+      <div class="max-w-7xl mx-auto px-6">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+          
+          <div class="p-8 rounded-2xl border border-custom bg-[var(--paper)] flex flex-col justify-between shadow-sm">
+            <div>
+              <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mb-1">Visibility Controls</span>
+              <h3 class="text-xl font-bold mb-4">Personal Privacy Limits</h3>
+              <p class="text-sm text-[var(--muted)] leading-relaxed mb-8">
+                Secure visibility parameters. Choose what context is written back into corporate or school systems. Hide personal event descriptions while showing slot availability.
+              </p>
+            </div>
+            <div class="p-4 rounded-lg bg-black/[0.01] dark:bg-white/[0.01] border border-custom">
+              <label class="text-[10px] font-bold text-[var(--muted)] uppercase block mb-2" for="visibilitySelect">Privacy Level</label>
+              <select id="visibilitySelect" class="w-full p-2.5 text-xs rounded border border-custom bg-[var(--paper)] text-[var(--ink)] focus:outline-none">
+                <option value="private">Private - Only display slot occupation</option>
+                <option value="friends">Friends & schoolmates view details</option>
+                <option value="parent">Parent/supervisor overview active</option>
               </select>
             </div>
           </div>
 
-          <div class="card">
-            <span class="kicker">Customize</span>
-            <h3>Calendar as a workspace.</h3>
-            <p>Save up to 10 backgrounds, upload images, use a drawing board, and switch light, dark, or auto mode.</p>
-            <div class="label-row">
-              <span class="tag">Drawing board</span>
-              <span class="tag">Image upload</span>
-              <span class="tag">10 save spaces</span>
-              <span class="tag">Light</span>
-              <span class="tag">Dark</span>
-              <span class="tag">Auto</span>
+          <!-- Quick FAQ card directly next to privacy rules -->
+          <div class="p-8 rounded-2xl border border-custom bg-[var(--paper)] flex flex-col justify-between shadow-sm">
+            <div>
+              <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block mb-1">Self-Custody</span>
+              <h3 class="text-xl font-bold mb-4">You own your database</h3>
+              <p class="text-sm text-[var(--muted)] leading-relaxed mb-8">
+                Your calendar events are saved directly into your browser or personal iCloud/Google spaces using clean, standard JSON data arrays. We never sell your schedules to third-party data collection agents. 
+              </p>
+            </div>
+            <div class="border-t border-custom pt-4 text-xs text-[var(--muted)] font-mono">
+              100% secure, local token storage.
             </div>
           </div>
+
         </div>
 
-        <div style="height:14px"></div>
-        <div class="compat-row">
-          <div class="logo-tile"><span class="logo-dot">Z</span><span>Zoom</span></div>
-          <div class="logo-tile"><span class="logo-dot">M</span><span>Google Meet</span></div>
-          <div class="logo-tile"><span class="logo-dot">T</span><span>Teams</span></div>
-          <div class="logo-tile"><span class="logo-dot">S</span><span>Slack</span></div>
-          <div class="logo-tile"><span class="logo-dot">O</span><span>Organization calendars</span></div>
+        <!-- Real SVG Integrations Grid -->
+        <h3 class="text-center text-[10px] font-bold text-[var(--muted)] tracking-wider uppercase mb-10">Integrated Ecosystem</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-6">
+          
+          <!-- Zoom -->
+          <div class="p-6 border border-custom bg-[var(--paper)] rounded-xl flex flex-col items-center gap-3.5 text-center shadow-sm">
+            <svg class="w-10 h-10 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.5 13.5c-.28 0-.5-.22-.5-.5v-1l-2 1.5V11l2 1.5v-1c0-.28.22-.5.5-.5h2c.28 0 .5.22.5.5v3c0 .28-.22.5-.5.5h-2z" />
+            </svg>
+            <span class="text-xs font-semibold">Zoom Calls</span>
+          </div>
+
+          <!-- Google Meet -->
+          <div class="p-6 border border-custom bg-[var(--paper)] rounded-xl flex flex-col items-center gap-3.5 text-center shadow-sm">
+            <svg class="w-10 h-10 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="12" height="12" rx="2" fill="currentColor" fill-opacity="0.1" />
+              <path d="M15 10l5-4v12l-5-4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span class="text-xs font-semibold">Google Meet</span>
+          </div>
+
+          <!-- Microsoft Teams -->
+          <div class="p-6 border border-custom bg-[var(--paper)] rounded-xl flex flex-col items-center gap-3.5 text-center shadow-sm">
+            <svg class="w-10 h-10 text-indigo-500" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-6 6c0-1.66 1.34-3 3-3h6c1.66 0 3 1.34 3 3v2H6v-2z" />
+            </svg>
+            <span class="text-xs font-semibold">MS Teams</span>
+          </div>
+
+          <!-- Slack -->
+          <div class="p-6 border border-custom bg-[var(--paper)] rounded-xl flex flex-col items-center gap-3.5 text-center shadow-sm">
+            <svg class="w-10 h-10 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 10.5C5 9.67 5.67 9 6.5 9H8v1.5C8 11.33 7.33 12 6.5 12S5 11.33 5 10.5zm0 3c0-.83.67-1.5 1.5-1.5H11v1.5c0 .83-.67 1.5-1.5 1.5H6.5c-.83 0-1.5-.67-1.5-1.5z" />
+            </svg>
+            <span class="text-xs font-semibold">Slack Sync</span>
+          </div>
+
+          <!-- Calendars -->
+          <div class="p-6 border border-custom bg-[var(--paper)] rounded-xl flex flex-col items-center gap-3.5 text-center col-span-2 sm:col-span-1 shadow-sm">
+            <svg class="w-10 h-10 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span class="text-xs font-semibold">External Sync</span>
+          </div>
+
         </div>
       </div>
     </section>
 
-    <section id="pricing">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Start with seven free days.</h2>
-          <p>Pricing can vary later. The page already supports a launch-ready set of individual, family, business, and organization plans.</p>
+    <!-- Simple, Realistic Pricing (Overhauled Grid to make all plans fit in one unified row) -->
+    <section id="pricing" class="py-24 border-t border-custom">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--ink)] mb-4">
+            Try free for seven days
+          </h2>
+          <p class="text-[var(--muted)] text-sm sm:text-base">
+            Pick a tier that matches your schedule's complexity. No commitment, cancel anytime.
+          </p>
         </div>
-        <div class="pricing-grid">
-          <article class="card">
-            <span class="kicker">Starter</span>
-            <div class="price">To vary <small>/ mo</small></div>
-            <p>AI note capture, calendar labels, and agenda generation.</p>
-            <ul><li>7 day free trial</li><li>Manual overrides</li><li>Light and dark mode</li></ul>
-            <a class="ghost-btn" href="#demo">Start trial</a>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          
+          <!-- Starter -->
+          <article class="p-6 rounded-2xl border border-custom bg-[var(--paper)] flex flex-col justify-between shadow-sm">
+            <div>
+              <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 tracking-wider uppercase">Starter</span>
+              <div class="text-3xl font-extrabold text-[var(--ink)] mt-4 mb-3">$5 <span class="text-xs text-[var(--muted)] font-normal">/ mo</span></div>
+              <p class="text-xs text-[var(--muted)] mb-8">Best for keeping track of standard school & club calendars.</p>
+              <ul class="space-y-3.5 text-sm text-[var(--muted)] mb-10 border-t border-custom pt-8">
+                <li class="flex items-center gap-2">✔ Intelligent Capture</li>
+                <li class="flex items-center gap-2">✔ Simple Conflict Highlighter</li>
+                <li class="flex items-center gap-2">✔ Syncs with 1 Calendar</li>
+              </ul>
+            </div>
+            <a href="#demo" class="w-full text-center py-3 rounded-lg border border-custom text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all">Start Free Trial</a>
           </article>
-          <article class="card">
-            <span class="kicker">Pro</span>
-            <div class="price">To vary <small>/ mo</small></div>
-            <p>For students, creators, and overloaded calendars.</p>
-            <ul><li>Recurring event AI</li><li>Voiceover</li><li>Sync integrations</li></ul>
-            <a class="primary-btn" href="#demo">Choose Pro</a>
+
+          <!-- Pro -->
+          <article class="p-6 rounded-2xl border-2 border-emerald-700 bg-[var(--paper)] flex flex-col justify-between shadow-sm relative">
+            <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-700 text-white text-[10px] font-bold tracking-wider uppercase">Most Popular</span>
+            <div>
+              <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 tracking-wider uppercase">Pro Command Center</span>
+              <div class="text-3xl font-extrabold text-[var(--ink)] mt-4 mb-3">$12 <span class="text-xs text-[var(--muted)] font-normal">/ mo</span></div>
+              <p class="text-xs text-[var(--muted)] mb-8">Designed for busy students, creators, and freelancers with multi-channel days.</p>
+              <ul class="space-y-3.5 text-sm text-[var(--muted)] mb-10 border-t border-custom pt-8">
+                <li class="flex items-center gap-2">✔ Auto-Reschedule & Resolutions</li>
+                <li class="flex items-center gap-2">✔ Voiceover Summarization</li>
+                <li class="flex items-center gap-2">✔ Infinite Platform Integrations</li>
+                <li class="flex items-center gap-2">✔ High-Density Live Dashboard</li>
+              </ul>
+            </div>
+            <a href="#demo" class="w-full text-center py-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition-all">Start Pro Trial</a>
           </article>
-          <article class="card">
-            <span class="kicker">Family</span>
-            <div class="price">To vary <small>/ mo</small></div>
-            <p>Shared planning with parental controls and visibility rules.</p>
-            <ul><li>Family agendas</li><li>Parent controls</li><li>Shared availability</li></ul>
-            <a class="ghost-btn" href="#demo">Choose Family</a>
+
+          <!-- Group/Family -->
+          <article class="p-6 rounded-2xl border border-custom bg-[var(--paper)] flex flex-col justify-between shadow-sm">
+            <div>
+              <span class="text-[10px] font-bold text-purple-600 dark:text-purple-400 tracking-wider uppercase">Family / Group</span>
+              <div class="text-3xl font-extrabold text-[var(--ink)] mt-4 mb-3">$24 <span class="text-xs text-[var(--muted)] font-normal">/ mo</span></div>
+              <p class="text-xs text-[var(--muted)] mb-8">Perfect to coordinate practices, events, and due dates across family circles.</p>
+              <ul class="space-y-3.5 text-sm text-[var(--muted)] mb-10 border-t border-custom pt-8">
+                <li class="flex items-center gap-2">✔ Up to 6 Personal Accounts</li>
+                <li class="flex items-center gap-2">✔ Shared Availability Rules</li>
+                <li class="flex items-center gap-2">✔ Parent & Leader Overrides</li>
+                <li class="flex items-center gap-2">✔ Common Announcement Boards</li>
+              </ul>
+            </div>
+            <a href="#demo" class="w-full text-center py-3 rounded-lg border border-custom text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all">Choose Family Tier</a>
           </article>
-          <article class="card">
-            <span class="kicker">Organization</span>
-            <div class="price">To vary <small>/ mo</small></div>
-            <p>Calendar communication for teams, schools, and groups.</p>
-            <ul><li>Admin controls</li><li>Org free slots</li><li>Feedback and bug queue</li></ul>
-            <a class="ghost-btn" href="#demo">Contact sales</a>
+
+          <!-- Organization / Enterprise (Checklist Fixed) -->
+          <article class="p-6 rounded-2xl border border-custom bg-[var(--paper)] flex flex-col justify-between shadow-sm">
+            <div>
+              <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase">Organization / Enterprise</span>
+              <div class="text-3xl font-extrabold text-[var(--ink)] mt-4 mb-3">Let's talk</div>
+              <p class="text-xs text-[var(--muted)] mb-8">Improve productivity with teammates. Provide all of our great features to your team with extensive admin controls.</p>
+              <ul class="space-y-3.5 text-sm text-[var(--muted)] mb-10 border-t border-custom pt-8">
+                <li class="flex items-center gap-2">✔ Unlimited Shared Boards</li>
+                <li class="flex items-center gap-2">✔ Custom SAML / SSO Integration</li>
+                <li class="flex items-center gap-2">✔ Advanced Admin & Auditing</li>
+                <li class="flex items-center gap-2">✔ Dedicated Support Manager</li>
+              </ul>
+            </div>
+            <a href="#demo" class="w-full text-center py-3 rounded-lg border border-custom text-xs font-semibold hover:bg-black/5 dark:hover:bg-white/5 transition-all">Contact Sales</a>
           </article>
+
+        </div>
+
+        <!-- Interactive Collapsible "Compare Plans" Button & Feature Matrix Section -->
+        <div class="text-center mt-12">
+          <button onclick="toggleComparisonTable()" class="px-6 py-3 border border-custom text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all inline-flex items-center gap-2.5">
+            <span>Compare Plans & Features</span>
+            <svg id="compareArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Fully Detailed Smooth Height Transition Feature Matrix -->
+        <div id="comparisonContainer" class="hidden overflow-hidden transition-all duration-500 ease-out max-w-7xl mx-auto mt-8 bg-[var(--paper)] rounded-2xl border border-custom shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[700px] text-left text-xs border-collapse">
+              <thead>
+                <tr class="border-b border-custom bg-black/[0.01] dark:bg-white/[0.01]">
+                  <th class="p-5 font-bold text-[var(--ink)] text-sm">Feature comparison</th>
+                  <th class="p-5 font-bold text-blue-600 dark:text-blue-400 text-sm">Starter</th>
+                  <th class="p-5 font-bold text-emerald-700 dark:text-emerald-400 text-sm">Pro</th>
+                  <th class="p-5 font-bold text-purple-600 dark:text-purple-400 text-sm">Family</th>
+                  <th class="p-5 font-bold text-indigo-600 dark:text-indigo-400 text-sm">Enterprise</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-custom text-[var(--muted)]">
+                <tr>
+                  <td class="p-4.5 font-semibold text-[var(--ink)]">Connected Accounts</td>
+                  <td class="p-4.5">1 Calendar</td>
+                  <td class="p-4.5">Unlimited</td>
+                  <td class="p-4.5">Up to 6 Accounts</td>
+                  <td class="p-4.5">Unlimited</td>
+                </tr>
+                <tr>
+                  <td class="p-4.5 font-semibold text-[var(--ink)]">Intelligent Capture</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                </tr>
+                <tr>
+                  <td class="p-4.5 font-semibold text-[var(--ink)]">Conflict Resolution Assistant</td>
+                  <td class="p-4.5 text-amber-500 font-bold">Manual only</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔ Automatic</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔ Custom Rules</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔ Full Override Control</td>
+                </tr>
+                <tr>
+                  <td class="p-4.5 font-semibold text-[var(--ink)]">Voiceover Summarization</td>
+                  <td class="p-4.5">—</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                </tr>
+                <tr>
+                  <td class="p-4.5 font-semibold text-[var(--ink)]">Shared Availability Boards</td>
+                  <td class="p-4.5">—</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔</td>
+                </tr>
+                <tr>
+                  <td class="p-4.5 font-semibold text-[var(--ink)]">Admin / Auditing Console</td>
+                  <td class="p-4.5">—</td>
+                  <td class="p-4.5">—</td>
+                  <td class="p-4.5">Basic overview</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔ SAML SSO / Audit Log</td>
+                </tr>
+                <tr>
+                  <td class="p-4.5 font-semibold text-[var(--ink)]">Dedicated Support</td>
+                  <td class="p-4.5">Standard Email</td>
+                  <td class="p-4.5">Priority Support</td>
+                  <td class="p-4.5">Priority Support</td>
+                  <td class="p-4.5 text-emerald-600 dark:text-emerald-400 font-bold">✔ 24/7 Dedicated Manager</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-24 border-t border-custom bg-black/[0.01] dark:bg-white/[0.01]">
+      <div class="max-w-4xl mx-auto px-6">
+        <h2 class="text-3xl font-bold text-center text-[var(--ink)] mb-12">Frequently Asked Questions</h2>
+        <div class="space-y-4">
+          
+          <div class="border border-custom rounded-xl bg-[var(--paper)] overflow-hidden shadow-sm">
+            <button onclick="toggleFaq(this)" class="w-full px-6 py-5 text-left font-bold text-sm sm:text-base text-[var(--ink)] flex justify-between items-center hover:bg-black/[0.01] transition-all">
+              <span>How does this template avoid making mistakes?</span>
+              <span>+</span>
+            </button>
+            <div class="px-6 pb-5 text-sm text-[var(--muted)] leading-relaxed hidden">
+              We use smart AI algorithms to automatically and accurately draft your events. If the AI detects any conflicting details, overlapping times, or is unsure about a note, it will cleanly flag it and ask for your quick approval. Everything else syncs smoothly in the background.
+            </div>
+          </div>
+
+          <div class="border border-custom rounded-xl bg-[var(--paper)] overflow-hidden shadow-sm">
+            <button onclick="toggleFaq(this)" class="w-full px-6 py-5 text-left font-bold text-sm sm:text-base text-[var(--ink)] flex justify-between items-center hover:bg-black/[0.01] transition-all">
+              <span>Is my external calendar data shared or processed by third parties?</span>
+              <span>+</span>
+            </button>
+            <div class="px-6 pb-5 text-sm text-[var(--muted)] leading-relaxed hidden">
+              No. Data synchronization utilizes native TLS-encrypted client-side tokens directly with Google and Apple. No third-party servers monitor or save transaction lists.
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
 
-    <section id="faq">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Frequently asked questions.</h2>
-          <p>The answers here are written for a product concept and can be swapped for final launch copy later.</p>
-        </div>
-        <div class="faq">
-          <div class="faq-item open">
-            <button class="faq-question" type="button">How does AI add events?<span>+</span></button>
-            <div class="faq-answer">The note card parser looks for dates, times, names, locations, meeting links, labels, recurrence, and reminder language, then drafts a calendar item for review.</div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-question" type="button">What happens when the AI is confused?<span>+</span></button>
-            <div class="faq-answer">Ambiguous items go to troubleshooting, where the user can confirm whether something is an event, label, due date, reminder, or recurring pattern.</div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-question" type="button">Can organizations coordinate free slots?<span>+</span></button>
-            <div class="faq-answer">Yes. Organization accounts can publish free-slot availability while keeping event details private unless the user or admin allows more visibility.</div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-question" type="button">Can users request features?<span>+</span></button>
-            <div class="faq-answer">Users outside the free trial can post recommendations, feature requests, bug reports, and issue notes from the feedback area.</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="final-cta">
-      <div class="shell">
-        <h2>Meeting AI for your actual day.</h2>
-        <p>Try NEXTcalendar on a busy week and let your calendar turn scattered information into decisions, reminders, and next steps.</p>
-        <a class="store-btn" href="#demo">Start free trial</a>
-      </div>
-    </div>
   </main>
 
-  <footer class="footer">
-    <div class="shell footer-inner">
-      <span>NEXTcalendar</span>
-      <span>Create productivity with AI · 2026</span>
+  <!-- Clean Footer -->
+  <footer class="border-t border-custom py-10 bg-[var(--paper)] text-[var(--muted)] text-xs text-center">
+    <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-6">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-sm text-[var(--ink)]">NEXTcalendar</span>
+        <span>· Reliable planning and scheduling</span>
+      </div>
+      <span>&copy; 2026 NEXTcalendar Inc. All rights reserved.</span>
     </div>
   </footer>
 
-  <div class="menu-pop" id="menuPop" role="menu" aria-label="Event actions">
-    <button class="menu-item" type="button" data-action="edit">Edit event</button>
-    <button class="menu-item" type="button" data-action="rename">Rename</button>
-    <button class="menu-item" type="button" data-action="copy">Copy link</button>
-    <button class="menu-item" type="button" data-action="privacy">Mark as private</button>
-    <button class="menu-item" type="button" data-action="move">Move to calendar</button>
-  </div>
-
-  <div class="modal-backdrop" id="editModal" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
-      <h3 id="editTitle">Edit event</h3>
-      <div class="form-grid">
-        <label>Headline <input id="eventTitleInput" value="Planning Session" /></label>
-        <label>Label
-          <select id="eventLabelInput">
-            <option>Event</option>
-            <option>Due date</option>
-            <option>Recurring event</option>
-            <option>Assignment</option>
-            <option>Personal</option>
-          </select>
-        </label>
-        <label>Details <input id="eventDetailInput" value="Conference room B, connected to Google Meet." /></label>
-      </div>
-      <div class="modal-actions">
-        <button class="ghost-btn" id="closeModal" type="button">Cancel</button>
-        <button class="primary-btn" id="saveModal" type="button">Save changes</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    const events = [
-      { day: "Mon", date: 12, title: "Team Standup", time: "9:00 - 9:30 AM", label: "Event", color: "sky", top: 84, height: 74, details: "Google Meet synced, notes from last sprint attached, and follow-ups ready." },
-      { day: "Tue", date: 13, title: "Client Call", time: "10:30 - 11:00 AM", label: "Event", color: "green", top: 132, height: 64, details: "Public free slot protected. Client can view availability but not private calendar details." },
-      { day: "Wed", date: 14, title: "Planning Session", time: "9:30 - 10:30 AM", label: "Event", color: "gold", top: 92, height: 112, details: "Conference room B, Google Meet connected, agenda generated, and action items pending." },
-      { day: "Thu", date: 15, title: "Lunch & Learn", time: "12:00 - 1:00 PM", label: "Recurring event", color: "lilac", top: 232, height: 76, details: "Recurring until June 12. AI marked it as a learning event with optional reminder." },
-      { day: "Fri", date: 16, title: "Design Review", time: "10:00 - 11:00 AM", label: "Event", color: "sky", top: 124, height: 80, details: "Linked design board, generated critique checklist, and added voiceover summary." },
-      { day: "Tue", date: 13, title: "Project Deadline", time: "3:00 PM", label: "Due date", color: "rose", top: 338, height: 72, details: "AI labeled this as a due date, not a meeting. Reminder is set for the prior morning." },
-      { day: "Sat", date: 17, title: "1:1 with Manager", time: "2:00 - 2:30 PM", label: "Event", color: "green", top: 292, height: 68, details: "Private event. Organization can only see the busy block." }
+    // Event Data Model
+    const initialEvents = [
+      { day: "Mon", timeIndex: 0, title: "Team Standup", time: "9:00 - 9:30 AM", label: "Event", color: "sky", details: "Reviewing active tasks, sprint progress, and updating client project milestones." },
+      { day: "Tue", timeIndex: 1, title: "Client Call", time: "10:00 - 11:00 AM", label: "Event", color: "green", details: "Presenting the project drafts. Showing free-time slots without revealing personal calendars." },
+      { day: "Wed", timeIndex: 0, title: "Planning Session", time: "9:30 - 10:30 AM", label: "Event", color: "gold", details: "Main planning meeting to review goals, divide workloads, and confirm project timelines." },
+      { day: "Thu", timeIndex: 3, title: "Lunch & Learn", time: "12:00 - 1:00 PM", label: "Recurring event", color: "lilac", details: "Weekly study group and educational presentation on fresh visual layout techniques." },
+      { day: "Fri", timeIndex: 1, title: "Design Review", time: "10:00 - 11:00 AM", label: "Event", color: "sky", details: "Group review session for landing pages and marketing layouts." }
     ];
 
-    const weekGrid = document.getElementById("weekGrid");
-    const detailPanel = document.getElementById("detailPanel");
-    const menuPop = document.getElementById("menuPop");
-    const editModal = document.getElementById("editModal");
-    let selectedEvent = events[2];
-    let selectedEventNode = null;
+    let currentEvents = [...initialEvents];
 
-    function renderWeek() {
-      const days = [
-        ["Mon", 12], ["Tue", 13], ["Wed", 14], ["Thu", 15], ["Fri", 16], ["Sat", 17], ["Sun", 18]
-      ];
-      days.forEach(([day, date]) => {
+    // Tracking state for interactive MC resolve widget
+    let mcSelections = { location: 'Library', time: '3:30 PM' };
+    let reduceMotionEnabled = false;
+
+    // Theme Toggle Functionality
+    const themeToggle = document.getElementById("themeToggle");
+    if (themeToggle) {
+      themeToggle.addEventListener("click", () => {
+        // Toggle dark class on root documentElement for Tailwind 3.x configuration support!
+        document.documentElement.classList.toggle("dark");
+        // Re-initialize particles on theme toggle to switch color contrast cleanly
+        if (!reduceMotionEnabled) {
+          setTimeout(initParticles, 150);
+        }
+      });
+    }
+
+    // Toggle Mobile Navigation Drawer Menu
+    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+    const mobileMenu = document.getElementById("mobileMenu");
+    if (mobileMenuBtn && mobileMenu) {
+      mobileMenuBtn.addEventListener("click", () => {
+        mobileMenu.classList.toggle("hidden");
+      });
+      // Close menu when clicking navigation links inside it
+      mobileMenu.addEventListener("click", (e) => {
+        if (e.target.tagName === "A" || e.target.closest("a")) {
+          mobileMenu.classList.add("hidden");
+        }
+      });
+    }
+
+    // Reduce Motion Toggle Mechanics (Now with smooth sliding knob translation, text completely removed)
+    const motionToggle = document.getElementById("motionToggle");
+    const motionToggleKnob = document.getElementById("motionToggleKnob");
+    const particleCanvas = document.getElementById("particleCanvas");
+    const staticHeroText = document.getElementById("staticHeroText");
+    const motionAreaWrapper = document.getElementById("motionAreaWrapper");
+
+    if (motionToggle && motionToggleKnob) {
+      motionToggle.addEventListener("click", () => {
+        reduceMotionEnabled = !reduceMotionEnabled;
+        if (reduceMotionEnabled) {
+          // Reduce Motion is ON (Knob moves to the right)
+          motionToggleKnob.style.transform = "translateX(26px)";
+          motionToggleKnob.classList.remove("bg-emerald-700", "dark:bg-emerald-400");
+          motionToggleKnob.classList.add("bg-neutral-400", "dark:bg-neutral-600");
+          
+          if (motionAreaWrapper) {
+            motionAreaWrapper.classList.add("reduce-motion-active");
+          }
+
+          if (particleCanvas) {
+            particleCanvas.style.opacity = "0";
+            setTimeout(() => {
+              if (reduceMotionEnabled) {
+                particleCanvas.classList.add("hidden");
+                if (staticHeroText) staticHeroText.classList.remove("hidden");
+              }
+            }, 300);
+          }
+        } else {
+          // Reduce Motion is OFF (Knob moves to the left)
+          motionToggleKnob.style.transform = "translateX(0)";
+          motionToggleKnob.classList.remove("bg-neutral-400", "dark:bg-neutral-600");
+          motionToggleKnob.classList.add("bg-emerald-700", "dark:bg-emerald-400");
+          
+          if (motionAreaWrapper) {
+            motionAreaWrapper.classList.remove("reduce-motion-active");
+          }
+
+          if (staticHeroText) staticHeroText.classList.add("hidden");
+          if (particleCanvas) {
+            particleCanvas.classList.remove("hidden");
+            void particleCanvas.offsetHeight;
+            particleCanvas.style.opacity = "1";
+          }
+          initParticles();
+        }
+      });
+    }
+
+    // Toggle Feature Comparison Table with smooth height scaling
+    function toggleComparisonTable() {
+      const container = document.getElementById("comparisonContainer");
+      const arrow = document.getElementById("compareArrow");
+      if (!container || !arrow) return;
+
+      if (container.classList.contains("hidden")) {
+        // Expand
+        container.classList.remove("hidden");
+        container.style.maxHeight = "0px";
+        void container.offsetHeight; // force layout repaint
+        
+        container.style.transition = "max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease-out";
+        container.style.maxHeight = `${container.scrollHeight}px`;
+        arrow.style.transform = "rotate(180deg)";
+      } else {
+        // Collapse
+        container.style.maxHeight = "0px";
+        arrow.style.transform = "rotate(0deg)";
+        
+        const handleTransitionEnd = (e) => {
+          if (e.propertyName === 'max-height') {
+            container.classList.add("hidden");
+            container.style.maxHeight = "";
+            container.removeEventListener('transitionend', handleTransitionEnd);
+          }
+        };
+        container.addEventListener('transitionend', handleTransitionEnd);
+      }
+    }
+
+    // Populate Calendar Grid Columns
+    function populateGrid() {
+      const weekGrid = document.getElementById("weekGrid");
+      if (!weekGrid) return;
+      
+      // Remove any existing day columns (leaving the first time labels column)
+      const children = Array.from(weekGrid.children);
+      for(let i = 1; i < children.length; i++) {
+        weekGrid.removeChild(children[i]);
+      }
+
+      const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const dates = [12, 13, 14, 15, 16, 17, 18];
+
+      daysOfWeek.forEach((day, index) => {
         const col = document.createElement("div");
-        col.className = "day-col" + (day === "Wed" ? " today" : "");
-        col.innerHTML = `<div class="day-head">${day}<strong>${date}</strong></div><div class="slots"></div>`;
-        const slots = col.querySelector(".slots");
-        events.filter(event => event.day === day).forEach(event => {
-          const node = document.createElement("button");
-          node.className = `event ${event.color}`;
-          node.style.top = event.top + "px";
-          node.style.height = event.height + "px";
-          node.type = "button";
-          node.innerHTML = `<strong><span>${event.title}</span><span class="event-menu" aria-label="Open event menu">...</span></strong><small>${event.time}</small>`;
-          node.addEventListener("click", (e) => {
-            selectedEvent = event;
-            selectedEventNode = node;
-            if (e.target.classList.contains("event-menu")) {
-              const rect = e.target.getBoundingClientRect();
-              menuPop.style.left = Math.min(rect.left, window.innerWidth - 210) + "px";
-              menuPop.style.top = rect.bottom + 8 + "px";
-              menuPop.classList.add("open");
-            } else {
-              menuPop.classList.remove("open");
-              updateDetail(event);
-            }
+        col.className = "flex flex-col divide-y divide-custom relative min-h-[440px]";
+        
+        // Day Head Header
+        const dateNum = dates[index];
+        const isToday = day === "Wed"; // highlight Wed today
+        col.innerHTML = `
+          <div class="h-10 flex flex-col items-center justify-center text-[10px] font-semibold ${isToday ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold' : 'text-[var(--muted)]'}">
+            <span>${day}</span>
+            <span class="text-xs font-bold ${isToday ? 'text-emerald-800 dark:text-emerald-300' : 'text-[var(--ink)]'}">${dateNum}</span>
+          </div>
+        `;
+
+        // Hours Rows (Create Empty placeholders)
+        for(let t = 0; t < 7; t++) {
+          const slot = document.createElement("div");
+          slot.className = "h-14 relative group transition-colors duration-200 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]";
+          col.appendChild(slot);
+        }
+
+        // Filter and inject matching Events
+        const dayEvents = currentEvents.filter(e => e.day === day);
+        dayEvents.forEach(event => {
+          const evBtn = document.createElement("button");
+          // Color Schemes
+          let colorClass = "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30";
+          if (event.color === "green") colorClass = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
+          if (event.color === "gold") colorClass = "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30";
+          if (event.color === "lilac") colorClass = "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30";
+          if (event.color === "rose") colorClass = "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30";
+
+          // Calculate offset: Head is 40px, each hour slot is 56px
+          const topOffset = 40 + (event.timeIndex * 56) + 4;
+          
+          evBtn.className = `absolute left-1.5 right-1.5 p-2 rounded border text-left text-[11px] font-semibold leading-tight shadow-sm z-10 hover:scale-[1.01] transition-all cursor-pointer ${colorClass}`;
+          evBtn.style.top = `${topOffset}px`;
+          evBtn.style.height = `48px`;
+          evBtn.innerHTML = `
+            <div class="truncate text-[11px] font-bold">${event.title}</div>
+            <div class="text-[9px] opacity-80 font-medium truncate mt-0.5">${event.time}</div>
+          `;
+          
+          // Connect to Active Selection Panel on click
+          evBtn.addEventListener("click", () => {
+            selectEvent(event);
           });
-          slots.appendChild(node);
-          if (event.title === "Planning Session") selectedEventNode = node;
+
+          col.appendChild(evBtn);
         });
+
         weekGrid.appendChild(col);
       });
     }
 
-    function updateDetail(event) {
-      detailPanel.innerHTML = `
-        <span class="kicker">AI details</span>
-        <h3>${event.title}</h3>
-        <p>${event.details}</p>
-        <div class="label-row">
-          <span class="tag">${event.label}</span>
-          <span class="tag">${event.time}</span>
-          <span class="tag">AI suggested</span>
-        </div>
-      `;
+    // Handle Active Event Selection Details
+    function selectEvent(event) {
+      const titleNode = document.getElementById("selectedTitle");
+      const timeNode = document.getElementById("selectedTime");
+      const detailsNode = document.getElementById("selectedDetails");
+      const labelNode = document.getElementById("selectedLabel");
+
+      if (titleNode) titleNode.textContent = event.title;
+      if (timeNode) timeNode.textContent = `${event.day}, May ${getDayDate(event.day)} · ${event.time}`;
+      if (detailsNode) detailsNode.textContent = event.details || "No additional notes or meeting links attached.";
+      if (labelNode) labelNode.textContent = event.label;
     }
 
-    renderWeek();
+    // Help connect days with real numbers
+    function getDayDate(day) {
+      const mapping = { "Mon": 12, "Tue": 13, "Wed": 14, "Thu": 15, "Fri": 16, "Sat": 17, "Sun": 18 };
+      return mapping[day] || 12;
+    }
 
-    document.getElementById("themeToggle").addEventListener("click", () => {
-      document.body.classList.toggle("dark");
-    });
+    // Set interactive note presets inside text editor
+    function setParserPreset(text) {
+      const noteInput = document.getElementById("noteInput");
+      if (noteInput) {
+        noteInput.value = text;
+      }
+    }
 
-    document.querySelectorAll("[data-density]").forEach(button => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll("[data-density]").forEach(btn => btn.classList.remove("active"));
-        button.classList.add("active");
-        document.querySelector(".calendar-board").style.fontSize = button.dataset.density === "compact" ? "0.86rem" : "1rem";
+    // Smooth heights transition utility for #sandboxWidget
+    function transitionContainerHeight(action) {
+      const widget = document.getElementById("sandboxWidget");
+      if (!widget) {
+        action();
+        return;
+      }
+      
+      // Bypass animations completely if reduceMotionEnabled is active
+      if (reduceMotionEnabled) {
+        action();
+        return;
+      }
+      
+      // Get current layout height
+      const oldHeight = widget.offsetHeight;
+      
+      // Lock current height in explicit pixels and temporarily bypass CSS classes transition during update
+      widget.style.height = `${oldHeight}px`;
+      widget.style.transition = "none";
+      
+      // Execute DOM updates inside safe state closure
+      action();
+      
+      // Force repaint 
+      void widget.offsetHeight; 
+      
+      // Measure natural end target scroll height 
+      const newHeight = widget.scrollHeight;
+      
+      // Re-apply premium bezier height transition curves smoothly
+      widget.style.transition = "height 0.6s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s, color 0.2s, border-color 0.2s";
+      widget.style.height = `${newHeight}px`;
+      
+      // Clean up dynamic explicit styling properties after transition finishes
+      const handleTransitionEnd = (e) => {
+        if (e.propertyName === 'height') {
+          widget.style.height = '';
+          widget.removeEventListener('transitionend', handleTransitionEnd);
+        }
+      };
+      widget.addEventListener('transitionend', handleTransitionEnd);
+    }
+
+    // Interactive Multi-Choice Resolve widget logic
+    function chooseMcOption(questionNum, value, btnElement) {
+      const btnClass = questionNum === 1 ? '.q1-btn' : '.q2-btn';
+      document.querySelectorAll(btnClass).forEach(btn => {
+        btn.classList.remove('border-emerald-600', 'bg-emerald-500/5', 'border-2');
+        btn.classList.add('border-custom', 'bg-[var(--paper)]');
+        
+        const check = btn.querySelector(questionNum === 1 ? '.q1-check' : '.q2-check');
+        if (check) {
+          check.innerHTML = '';
+          check.classList.remove('bg-emerald-700', 'border-emerald-700', 'text-white');
+          check.classList.add('border-custom');
+        }
       });
-    });
 
-    document.getElementById("parseNote").addEventListener("click", () => {
-      const note = document.getElementById("noteInput").value.trim();
-      const label = /deadline|due/i.test(note) ? "Due date" : /every|recurring/i.test(note) ? "Recurring event" : "Event";
-      const personal = /personal|family|private/i.test(note) ? " · Personal" : "";
-      document.getElementById("parsedResult").textContent = `${label} · ${note || "Untitled item"}${personal} · Reminder suggested`;
-    });
+      // Apply selected styles to the clicked option button
+      btnElement.classList.remove('border-custom', 'bg-[var(--paper)]');
+      btnElement.classList.add('border-emerald-600', 'bg-emerald-500/5', 'border-2');
+      
+      const check = btnElement.querySelector(questionNum === 1 ? '.q1-check' : '.q2-check');
+      if (check) {
+        check.innerHTML = '✓';
+        check.classList.remove('border-custom');
+        check.classList.add('bg-emerald-700', 'border-emerald-700', 'text-white');
+      }
 
-    document.getElementById("agendaBtn").addEventListener("click", () => {
-      document.getElementById("agendaText").textContent = "Agenda generated: prepare sprint notes, confirm planning room, review design comments, submit project deliverable, and bring one question to the manager 1:1.";
-    });
+      // Update selections object state
+      if (questionNum === 1) {
+        mcSelections.location = value;
+      } else {
+        mcSelections.time = value;
+      }
 
-    document.getElementById("voiceBtn").addEventListener("click", () => {
-      document.getElementById("agendaText").textContent = "Voiceover ready: You have five priority items today. The planning session and project deadline need the most attention.";
-    });
+      // Update real-time display block preview
+      document.getElementById('mcPreview').textContent = `Julia · ${mcSelections.location} · ${mcSelections.time}`;
+    }
 
-    document.querySelectorAll(".resolve-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        button.closest(".confused-item").remove();
-        if (!document.querySelector(".confused-item")) {
-          document.getElementById("troubleshootList").innerHTML = "<p>No confused items. Everything is labeled.</p>";
+    // Interactive Waterfall Loading Flow to finalize event
+    function startWaterfallFlow() {
+      const sandboxContent = document.getElementById("sandboxContent");
+      const ghostLoader = document.getElementById("ghostLoader");
+      const finalizedWidget = document.getElementById("finalizedWidget");
+      const sparkleIcon = document.getElementById("sparkleIcon");
+      const assistantSpeech = document.getElementById("assistantSpeech");
+      const assistantSubSpeech = document.getElementById("assistantSubSpeech");
+
+      if (!sandboxContent || !ghostLoader || !finalizedWidget) return;
+
+      // Fast-track state immediately without shimmers or loading delays if motion is reduced
+      if (reduceMotionEnabled) {
+        const finalLocation = document.getElementById("finalLocation");
+        const finalTime = document.getElementById("finalTime");
+        const finalTitleText = document.getElementById("finalTitleText");
+
+        if (finalLocation) finalLocation.textContent = mcSelections.location;
+        if (finalTime) finalTime.textContent = `Thursday @ ${mcSelections.time}`;
+        if (finalTitleText) {
+          finalTitleText.textContent = `Meet Julia at ${mcSelections.location} at ${mcSelections.time}`;
+          finalTitleText.classList.remove("typing-cursor");
+        }
+
+        if (assistantSpeech) {
+          assistantSpeech.innerHTML = `Perfect choice. I've booked your meeting with Julia at the <span class="font-bold text-emerald-700 dark:text-emerald-400">${mcSelections.location}</span> for <span class="font-bold text-emerald-700 dark:text-emerald-400">${mcSelections.time}</span>.`;
+        }
+        if (assistantSubSpeech) {
+          assistantSubSpeech.textContent = "Your playground calendar below is ready for syncing.";
+        }
+
+        sandboxContent.classList.add("hidden");
+        finalizedWidget.classList.remove("hidden", "opacity-0", "translate-y-4");
+        finalizedWidget.classList.add("opacity-100", "translate-y-0");
+        return;
+      }
+
+      // 1. High velocity sparkle spin starts with inertia easing
+      if (sparkleIcon) {
+        sparkleIcon.classList.add("sparkle-spin-active");
+      }
+
+      // 2. Dissolve existing selection form content gracefully
+      sandboxContent.style.opacity = "0";
+      sandboxContent.style.transform = "translateY(8px)";
+      
+      setTimeout(() => {
+        // Wrap state changes inside smooth height transitional bounds
+        transitionContainerHeight(() => {
+          sandboxContent.classList.add("hidden");
+          
+          // 3. Reveal ghost shimmer loader with a modern height expansion
+          ghostLoader.classList.remove("hidden");
+          ghostLoader.style.opacity = "0";
+          setTimeout(() => {
+            ghostLoader.style.opacity = "1";
+          }, 50);
+
+          // Update narrative speech
+          if (assistantSpeech) assistantSpeech.textContent = "Writing your choices to our template...";
+          if (assistantSubSpeech) assistantSubSpeech.textContent = "Checking details.";
+        });
+      }, 300);
+
+      // 4. End loaded sequence after 1.8 seconds (duration of sparkle spin)
+      setTimeout(() => {
+        // Fade loader
+        ghostLoader.style.opacity = "0";
+        setTimeout(() => {
+          transitionContainerHeight(() => {
+            ghostLoader.classList.add("hidden");
+            if (sparkleIcon) {
+              sparkleIcon.classList.remove("sparkle-spin-active");
+            }
+
+            // Format layout for the finalized widget values
+            const finalLocation = document.getElementById("finalLocation");
+            const finalTime = document.getElementById("finalTime");
+            if (finalLocation) finalLocation.textContent = mcSelections.location;
+            if (finalTime) finalTime.textContent = `Thursday @ ${mcSelections.time}`;
+
+            // Speech text completion
+            if (assistantSpeech) {
+              assistantSpeech.innerHTML = `Perfect choice. I've booked your meeting with Julia at the <span class="font-bold text-emerald-700 dark:text-emerald-400">${mcSelections.location}</span> for <span class="font-bold text-emerald-700 dark:text-emerald-400">${mcSelections.time}</span>.`;
+            }
+            if (assistantSubSpeech) {
+              assistantSubSpeech.textContent = "Your playground calendar below is ready for syncing.";
+            }
+
+            // Show the finalized widget frame
+            finalizedWidget.classList.remove("hidden");
+            setTimeout(() => {
+              finalizedWidget.classList.remove("opacity-0", "translate-y-4");
+              finalizedWidget.classList.add("opacity-100", "translate-y-0");
+              
+              // 5. Trigger clean typewriter character generation
+              typewriterTitle(`Meet Julia at ${mcSelections.location} at ${mcSelections.time}`);
+            }, 50);
+          });
+
+        }, 300);
+      }, 2100);
+    }
+
+    // Typewriter Simulator with zero glitches
+    function typewriterTitle(fullText) {
+      const textContainer = document.getElementById("finalTitleText");
+      if (!textContainer) return;
+
+      textContainer.textContent = "";
+      textContainer.classList.add("typing-cursor");
+
+      let idx = 0;
+      function typeChar() {
+        if (idx < fullText.length) {
+          textContainer.textContent += fullText.charAt(idx);
+          idx++;
+          setTimeout(typeChar, 45); // highly premium typing rhythm
+        } else {
+          // Keep blinking briefly, then stop to stay pristine
+          setTimeout(() => {
+            textContainer.classList.remove("typing-cursor");
+          }, 1500);
+        }
+      }
+      typeChar();
+    }
+
+    // Reset layout state to beginning
+    function resetWaterfallFlow() {
+      const sandboxContent = document.getElementById("sandboxContent");
+      const finalizedWidget = document.getElementById("finalizedWidget");
+      const ghostLoader = document.getElementById("ghostLoader");
+      const assistantSpeech = document.getElementById("assistantSpeech");
+      const assistantSubSpeech = document.getElementById("assistantSubSpeech");
+
+      transitionContainerHeight(() => {
+        if (sandboxContent) {
+          sandboxContent.classList.remove("hidden");
+          if (reduceMotionEnabled) {
+            sandboxContent.style.opacity = "1";
+            sandboxContent.style.transform = "none";
+          } else {
+            setTimeout(() => {
+              sandboxContent.style.opacity = "1";
+              sandboxContent.style.transform = "translateY(0)";
+            }, 50);
+          }
+        }
+        if (finalizedWidget) {
+          finalizedWidget.classList.add("hidden", "opacity-0", "translate-y-4");
+          finalizedWidget.classList.remove("opacity-100", "translate-y-0");
+        }
+        if (ghostLoader) ghostLoader.classList.add("hidden");
+
+        if (assistantSpeech) {
+          assistantSpeech.innerHTML = `Quick question before I proceed: I see you wrote down <span class="font-semibold underline decoration-dotted decoration-emerald-500">Meet Julia at the gym or maybe library after school, around 3:30 or 5:00</span>.`;
+        }
+        if (assistantSubSpeech) {
+          assistantSubSpeech.textContent = "Which location and time would you like me to book for you?";
+        }
+      });
+    }
+
+    // Wrapper function to add the MC selected event to the playground and reset the sandbox UI state
+    function addMcEventToGridAndReset() {
+      // First plot event to main grid playground
+      addMcEventToGrid();
+      // Go back to start state
+      resetWaterfallFlow();
+    }
+
+    // Add resolved event values to live playground list, redraw calendar grid and highlight event
+    function addMcEventToGrid() {
+      // Choose 3:30 PM or 5 PM equivalents based on input (mapped cleanly to our grid positions)
+      const isEarly = mcSelections.time === '3:30 PM';
+      const timeIndex = isEarly ? 6 : 5; // grid indices for afternoon hours
+      
+      const resolvedEvent = {
+        day: "Thu",
+        timeIndex: timeIndex,
+        title: `Meet Julia at ${mcSelections.location}`,
+        time: mcSelections.time,
+        label: "Event",
+        color: "green",
+        details: `Confirmed meeting with Julia at the ${mcSelections.location} at ${mcSelections.time} via the natural Clarification Assistant.`
+      };
+
+      currentEvents.push(resolvedEvent);
+      populateGrid();
+      selectEvent(resolvedEvent);
+    }
+
+    // Intelligent Note Parsing simulation
+    const parseBtn = document.getElementById("parseNote");
+    if (parseBtn) {
+      parseBtn.addEventListener("click", () => {
+        const valNode = document.getElementById("noteInput");
+        const resultNode = document.getElementById("parsedResult");
+        if (!valNode || !resultNode) return;
+
+        const val = valNode.value.trim();
+        const lower = val.toLowerCase();
+        
+        let label = "Event";
+        let tags = "Reminder Suggested";
+        if (lower.includes("exam") || lower.includes("practice") || lower.includes("assignment")) {
+          label = "Due date";
+        }
+        if (lower.includes("weekly") || lower.includes("every")) {
+          label = "Recurring event";
+        }
+        if (lower.includes("personal") || lower.includes("family")) {
+          tags = "Personal Workspace";
+        }
+
+        resultNode.textContent = `Extracted: ${label} · ${val} · [${tags}]`;
+      });
+    }
+
+    // Toggle Grid Layout Densities
+    document.querySelectorAll("[data-density]").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        document.querySelectorAll("[data-density]").forEach(b => {
+          b.className = "density-btn py-2 text-sm font-semibold rounded-lg bg-transparent text-[var(--ink)] border border-custom transition-all";
+        });
+        e.target.className = "density-btn py-2 text-sm font-semibold rounded-lg bg-[var(--ink)] text-[var(--bg)] border border-transparent transition-all";
+        
+        const mode = e.target.getAttribute("data-density");
+        const weekGrid = document.getElementById("weekGrid");
+        if (!weekGrid) return;
+        if (mode === "compact") {
+          weekGrid.style.transform = "scale(0.96)";
+          weekGrid.style.transformOrigin = "top center";
+        } else {
+          weekGrid.style.transform = "scale(1)";
         }
       });
     });
 
-    document.querySelectorAll(".faq-question").forEach(button => {
-      button.addEventListener("click", () => {
-        button.closest(".faq-item").classList.toggle("open");
-      });
-    });
+    // Resolve troubleshooter queue item & place on Grid in real time!
+    function resolveQueueItem(id, title, label, day, color) {
+      const itemNode = document.getElementById(id);
+      if (itemNode) {
+        itemNode.innerHTML = `<span class="text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1.5">Successfully plotted onto grid!</span>`;
+      }
+      
+      // Map new grid slot based on day
+      const newEvent = {
+        day: day,
+        timeIndex: 4, // plots around 1 PM
+        title: title,
+        time: "1:00 - 2:00 PM",
+        label: label,
+        color: color,
+        details: "Confirmed & resolved via the active troubleshooting queue with default optimal slot allocation."
+      };
+      
+      currentEvents.push(newEvent);
+      populateGrid();
+      selectEvent(newEvent);
 
-    menuPop.addEventListener("click", (e) => {
-      const action = e.target.dataset.action;
-      if (!action) return;
-      menuPop.classList.remove("open");
-      if (action === "edit" || action === "rename") {
-        document.getElementById("eventTitleInput").value = selectedEvent.title;
-        document.getElementById("eventLabelInput").value = selectedEvent.label;
-        document.getElementById("eventDetailInput").value = selectedEvent.details;
-        editModal.classList.add("open");
-        editModal.setAttribute("aria-hidden", "false");
+      setTimeout(() => {
+        if (itemNode) itemNode.remove();
+        const list = document.getElementById("troubleshootList");
+        if (list && list.children.length === 0) {
+          list.innerHTML = `<p class="text-xs text-[var(--muted)] italic text-center py-4">No active conflicts. Great job!</p>`;
+        }
+      }, 1500);
+    }
+
+    // Toggle Accordion Panels
+    function toggleFaq(button) {
+      const panel = button.nextElementSibling;
+      const indicator = button.querySelector("span:last-child");
+      if (!panel || !indicator) return;
+      const isHidden = panel.classList.contains("hidden");
+      
+      if (isHidden) {
+        panel.classList.remove("hidden");
+        indicator.textContent = "-";
       } else {
-        selectedEvent.details = action === "privacy" ? "Marked private. Organization members can only see this as a busy block." : selectedEvent.details;
-        updateDetail(selectedEvent);
+        panel.classList.add("hidden");
+        indicator.textContent = "+";
+      }
+    }
+
+    // Play once on scroll trigger using IntersectionObserver
+    const card = document.getElementById("tiltCard");
+
+    const scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          if (card) {
+            card.classList.remove("opacity-0", "translate-y-4");
+            card.classList.add("opacity-100", "translate-y-0");
+          }
+          scrollObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    if (card) {
+      scrollObserver.observe(card);
+    }
+
+    // Smooth Mouse-Follow Parallax on Hero Card (No snap-on-enter bug)
+    if (card) {
+      let isHovered = false;
+      
+      card.style.transition = "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)";
+      
+      card.addEventListener("mouseenter", () => {
+        isHovered = true;
+        // Apply smooth transition when pointer first enters the bounds to prevent visual snaps
+        card.style.transition = "transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)";
+        
+        // After transition settles, switch to tight follow mode (150ms)
+        setTimeout(() => {
+          if (isHovered) {
+            card.style.transition = "transform 0.05s ease-out";
+          }
+        }, 150);
+      });
+
+      card.addEventListener("mousemove", (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        
+        // Balanced 3D tilt angles (max 0.6 degrees)
+        const tiltX = (y / (rect.height / 2)) * -0.6;
+        const tiltY = (x / (rect.width / 2)) * 0.6;
+        
+        card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+      });
+
+      card.addEventListener("mouseleave", () => {
+        isHovered = false;
+        // Smooth snapback parameters
+        card.style.transition = "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
+        card.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg)";
+      });
+    }
+
+    // Custom cursor logic with smooth spring follow physics (Safe from glitches)
+    const cursor = document.getElementById("customCursor");
+
+    let mouseX = 0, mouseY = 0;
+    let dotX = 0, dotY = 0;
+    let cursorVisible = false;
+
+    window.addEventListener("mousemove", (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      
+      if (!cursorVisible) {
+        if (cursor) cursor.style.opacity = "1";
+        cursorVisible = true;
       }
     });
 
-    document.getElementById("closeModal").addEventListener("click", () => {
-      editModal.classList.remove("open");
-      editModal.setAttribute("aria-hidden", "true");
+    document.addEventListener("mouseleave", () => {
+      if (cursor) cursor.style.opacity = "0";
+      cursorVisible = false;
     });
 
-    document.getElementById("saveModal").addEventListener("click", () => {
-      selectedEvent.title = document.getElementById("eventTitleInput").value;
-      selectedEvent.label = document.getElementById("eventLabelInput").value;
-      selectedEvent.details = document.getElementById("eventDetailInput").value;
-      if (selectedEventNode) {
-        selectedEventNode.querySelector("strong span").textContent = selectedEvent.title;
-      }
-      updateDetail(selectedEvent);
-      editModal.classList.remove("open");
-      editModal.setAttribute("aria-hidden", "true");
+    document.addEventListener("mouseenter", () => {
+      if (cursor) cursor.style.opacity = "1";
+      cursorVisible = true;
     });
 
-    document.addEventListener("click", (e) => {
-      if (!menuPop.contains(e.target) && !e.target.classList.contains("event-menu")) {
-        menuPop.classList.remove("open");
+    function updateCursor() {
+      dotX += (mouseX - dotX) * 0.38;
+      dotY += (mouseY - dotY) * 0.38;
+
+      if (cursor) {
+        cursor.style.transform = `translate3d(${dotX}px, ${dotY}px, 0)`;
+      }
+
+      requestAnimationFrame(updateCursor);
+    }
+    requestAnimationFrame(updateCursor);
+
+
+    // ==========================================
+    // INTERACTIVE PARTICLE SYSTEM ENGINE
+    // ==========================================
+    const canvasEl = document.getElementById("particleCanvas");
+    const ctxParticles = canvasEl.getContext("2d", { willReadFrequently: true });
+    
+    let particles = [];
+    let particleGroups = [];
+    let particleColor = "#0f766e"; // Default emerald fallback
+
+    function initParticles() {
+      if (reduceMotionEnabled) return;
+
+      const isDark = document.body.classList.contains("dark");
+      particleColor = isDark ? "#2dd4bf" : "#0f766e";
+
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvasEl.getBoundingClientRect();
+      
+      // Coerce to clean integers to eliminate floating point row-index calculations
+      const w = Math.floor(rect.width);
+      const h = Math.floor(rect.height);
+
+      // Safely check and exit early if the layout has a width or height of 0
+      if (w <= 0 || h <= 0) return;
+
+      canvasEl.width = w * dpr;
+      canvasEl.height = h * dpr;
+      ctxParticles.scale(dpr, dpr);
+
+      // Draw offscreen text helper to get exact coordinates
+      const offscreen = document.createElement("canvas");
+      const oCtx = offscreen.getContext("2d");
+      offscreen.width = w;
+      offscreen.height = h;
+
+      // Calculate perfect responsive font-sizing (Bigger typography)
+      let fontSize = Math.floor(w * 0.075); 
+      if (fontSize > 72) fontSize = 72;
+      if (fontSize < 28) fontSize = 28;
+
+      oCtx.fillStyle = "#000000";
+      oCtx.font = `bold ${fontSize}px ui-sans-serif, system-ui, -apple-system, sans-serif`;
+      oCtx.textBaseline = "middle";
+      oCtx.textAlign = "center";
+      
+      // Draw text in 3 responsive, stacked lines
+      const line1 = "The calendar";
+      const line2 = "that coordinates";
+      const line3 = "your day.";
+
+      oCtx.fillText(line1, w / 2, h / 2 - fontSize * 1.15);
+      oCtx.fillText(line2, w / 2, h / 2);
+      oCtx.fillText(line3, w / 2, h / 2 + fontSize * 1.15);
+
+      const imgData = oCtx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      particles = [];
+      // Integer-aligned stepping to perfectly capture pixel targets
+      const step = w < 640 ? 2 : 1.5; 
+
+      // Pre-calculate parent groups for cohesion split
+      const groupCount = 120; // More parent groups to handle the extra particle count gracefully
+      particleGroups = [];
+      for (let g = 0; g < groupCount; g++) {
+        const angle = Math.random() * Math.PI * 2;
+        // Start far offscreen
+        const distance = Math.max(w, h) * (1.1 + Math.random() * 0.4);
+        particleGroups.push({
+          x: w / 2 + Math.cos(angle) * distance,
+          y: h / 2 + Math.sin(angle) * distance,
+          vx: 0,
+          vy: 0,
+          splitTriggered: false,
+          progress: 0
+        });
+      }
+
+      for (let y = 0; y < h; y += step) {
+        for (let x = 0; x < w; x += step) {
+          // Strict integer conversions to prevent layout memory alignment drift
+          const px = Math.floor(x);
+          const py = Math.floor(y);
+          const index = (py * w + px) * 4;
+          const alpha = data[index + 3];
+
+          if (alpha > 128) {
+            // Assign each particle to a parent group cluster index
+            const groupIndex = Math.floor(Math.random() * groupCount);
+            const parent = particleGroups[groupIndex];
+
+            particles.push({
+              x: parent.x,
+              y: parent.y,
+              targetX: px,
+              targetY: py,
+              baseTargetX: px,
+              baseTargetY: py,
+              vx: 0,
+              vy: 0,
+              parentIndex: groupIndex,
+              isSplit: false,
+              radius: Math.random() * 0.45 + 0.25, // Significantly smaller circles for fine star-like look
+              speedFactor: Math.random() * 0.015 + 0.010, // Slower on-load text gathering speed (under 2 seconds assemble)
+              friction: 0.83 // Lower bounce coefficient for a damp, velvet settling action
+            });
+          }
+        }
+      }
+    }
+
+    // Scroll and Mouse tracking states (Tracks global viewport cursor positions to correctly calculate offsets even on scroll)
+    let globalMouseX = -1000;
+    let globalMouseY = -1000;
+    let localMouseX = -1000;
+    let localMouseY = -1000;
+
+    window.addEventListener("mousemove", (e) => {
+      globalMouseX = e.clientX;
+      globalMouseY = e.clientY;
+    });
+
+    window.addEventListener("mouseleave", () => {
+      globalMouseX = -1000;
+      globalMouseY = -1000;
+    });
+
+    // Touch event helper tracking
+    window.addEventListener("touchmove", (e) => {
+      if (e.touches.length > 0) {
+        globalMouseX = e.touches[0].clientX;
+        globalMouseY = e.touches[0].clientY;
       }
     });
+
+    window.addEventListener("touchend", () => {
+      globalMouseX = -1000;
+      globalMouseY = -1000;
+    });
+
+    // Track targets for floating elements dispersal
+    let targetXOffset = 0;
+    let currentXOffset = 0;
+
+    window.addEventListener("scroll", () => {
+      const scrollY = window.scrollY;
+      
+      // Calculate target horizontal offset for cards dispersal (super slow drift)
+      targetXOffset = Math.min(scrollY * 0.35, 120);
+    });
+
+    function animateParticles() {
+      // Update Scroll Dispersal Offset with ultra smooth linear interpolation (lerp)
+      currentXOffset += (targetXOffset - currentXOffset) * 0.08;
+
+      const f1 = document.getElementById("floater1");
+      const f2 = document.getElementById("floater2");
+      const f3 = document.getElementById("floater3");
+      const f4 = document.getElementById("floater4");
+
+      if (reduceMotionEnabled) {
+        // Reset offsets immediately if motion is turned off
+        if (f1) f1.style.transform = 'none';
+        if (f2) f2.style.transform = 'none';
+        if (f3) f3.style.transform = 'none';
+        if (f4) f4.style.transform = 'none';
+        requestAnimationFrame(animateParticles);
+        return;
+      }
+
+      // Apply scroll displacements to floating space cards (drift further outward)
+      if (f1) f1.style.transform = `translate3d(${-currentXOffset}px, ${-currentXOffset * 0.4}px, 0)`;
+      if (f2) f2.style.transform = `translate3d(${-currentXOffset * 1.1}px, ${currentXOffset * 0.3}px, 0)`;
+      if (f3) f3.style.transform = `translate3d(${currentXOffset}px, ${-currentXOffset * 0.4}px, 0)`;
+      if (f4) f4.style.transform = `translate3d(${currentXOffset * 1.1}px, ${currentXOffset * 0.3}px, 0)`;
+
+      ctxParticles.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+      // Track scroll driven disassembly factors (Scaled down to keep text legible while scrolling)
+      const scrollY = window.scrollY;
+      const dispersionFactor = Math.min(scrollY * 0.12, 60); 
+
+      const isDark = document.documentElement.classList.contains("dark");
+      ctxParticles.fillStyle = isDark ? "rgba(45, 212, 191, 0.9)" : "rgba(15, 118, 110, 0.9)";
+
+      const w = canvasEl.width / (window.devicePixelRatio || 1);
+      const h = canvasEl.height / (window.devicePixelRatio || 1);
+
+      // Safely measure the container ClientRect dynamically every frame to map local coordinates accurately even while scrolling!
+      const rect = canvasEl.getBoundingClientRect();
+      if (globalMouseX !== -1000 && globalMouseY !== -1000) {
+        localMouseX = globalMouseX - rect.left;
+        localMouseY = globalMouseY - rect.top;
+      } else {
+        localMouseX = -1000;
+        localMouseY = -1000;
+      }
+
+      // Update Parent Groups
+      for (let g = 0; g < particleGroups.length; g++) {
+        const pg = particleGroups[g];
+        pg.progress += 0.012; // slow & controlled initial travel
+
+        // Target center of all its child particles average
+        let avgX = w / 2;
+        let avgY = h / 2;
+
+        const ax = (avgX - pg.x) * 0.018; // decreased initial pull forces
+        const ay = (avgY - pg.y) * 0.018;
+
+        pg.vx += ax;
+        pg.vy += ay;
+        pg.vx *= 0.96; // higher deceleration damping
+        pg.vy *= 0.96;
+        pg.x += pg.vx;
+        pg.y += pg.vy;
+
+        // Trigger split when close to center or after timer
+        if (pg.progress > 0.40) {
+          pg.splitTriggered = true;
+        }
+      }
+
+      // Render and update Particle Nodes
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const parent = particleGroups[p.parentIndex];
+
+        if (!p.isSplit) {
+          if (parent.splitTriggered) {
+            // Fission sequence: child splits from parent and inherits velocity
+            p.isSplit = true;
+            p.x = parent.x;
+            p.y = parent.y;
+            p.vx = parent.vx;
+            p.vy = parent.vy;
+          } else {
+            // Cohesion sequence: lock to parent's position to draw combined giant circle
+            p.x = parent.x;
+            p.y = parent.y;
+          }
+        }
+
+        if (p.isSplit) {
+          // Standard child physics updates
+          const time = Date.now() * 0.0012;
+          const waveX = Math.sin(time + p.baseTargetY * 0.05) * 1.3;
+          const waveY = Math.cos(time + p.baseTargetX * 0.05) * 1.3;
+
+          let currentTargetX = p.baseTargetX;
+          let currentTargetY = p.baseTargetY;
+
+          if (dispersionFactor > 5) {
+            // Scatter layout proportionally to scroll depth
+            currentTargetX += Math.sin(p.baseTargetX * 11.2) * dispersionFactor * 1.6;
+            currentTargetY += Math.cos(p.baseTargetY * 11.2) * dispersionFactor * 1.6;
+          } else {
+            currentTargetX += waveX;
+            currentTargetY += waveY;
+          }
+
+          // Mouse proximity repellent forces
+          const dx = localMouseX - p.x;
+          const dy = localMouseY - p.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const radiusRepel = 75;
+
+          if (dist < radiusRepel) {
+            const force = (radiusRepel - dist) / radiusRepel;
+            const angle = Math.atan2(dy, dx);
+            p.vx -= Math.cos(angle) * force * 14;
+            p.vy -= Math.sin(angle) * force * 14;
+          }
+
+          // Elastic spring attraction coordinates (Highly damped friction to completely eradicate bounce)
+          const ax = (currentTargetX - p.x) * p.speedFactor;
+          const ay = (currentTargetY - p.y) * p.speedFactor;
+
+          p.vx += ax;
+          p.vy += ay;
+          p.vx *= p.friction; // lower bounce coefficient
+          p.vy *= p.friction;
+          p.x += p.vx;
+          p.y += p.vy;
+
+          ctxParticles.beginPath();
+          ctxParticles.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctxParticles.fill();
+        }
+      }
+
+      // Render Combined Big Parent circles for items not yet split
+      for (let g = 0; g < particleGroups.length; g++) {
+        const pg = particleGroups[g];
+        if (!pg.splitTriggered) {
+          ctxParticles.beginPath();
+          // Draw smaller parent circles flying in (cohesion stage)
+          ctxParticles.arc(pg.x, pg.y, 4.5, 0, Math.PI * 2); // Smaller parent circles for better visual flow
+          ctxParticles.fill();
+        }
+      }
+
+      requestAnimationFrame(animateParticles);
+    }
+
+    // Re-adjust layouts on resize safely
+    window.addEventListener("resize", () => {
+      initParticles();
+    });
+
+    // Fire Up Systems on load
+    initParticles();
+    requestAnimationFrame(animateParticles);
+
+    // Initial launch rendering
+    populateGrid();
   </script>
 </body>
 </html>
